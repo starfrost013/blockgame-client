@@ -1232,7 +1232,6 @@ static void SaveLevelScreen_RemoveOverwrites(struct SaveLevelScreen* s) {
 
 static cc_result SaveLevelScreen_SaveMap(const cc_string* path) {
 	static const cc_string schematic = String_FromConst(".schematic");
-	static const cc_string mine = String_FromConst(".mine");
 	struct Stream stream, compStream;
 	struct GZipState state;
 	cc_result res;
@@ -1243,8 +1242,6 @@ static cc_result SaveLevelScreen_SaveMap(const cc_string* path) {
 
 	if (String_CaselessEnds(path, &schematic)) {
 		res = Schematic_Save(&compStream);
-	} else if (String_CaselessEnds(path, &mine)) {
-		res = Dat_Save(&compStream);
 	} else {
 		res = Cw_Save(&compStream);
 	}
