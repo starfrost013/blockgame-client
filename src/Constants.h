@@ -20,8 +20,8 @@ Copyright 2014-2022 ClassiCube | Licensed under BSD-3
 #define GAME_APP_NAME  "ClassiCube 1.3.5 iOS alpha"
 #define GAME_APP_TITLE "ClassiCube 1.3.5 iOS alpha"
 #else
-#define GAME_APP_NAME  "ClassiCube 1.3.5"
-#define GAME_APP_TITLE "ClassiCube 1.3.5"
+#define GAME_APP_NAME  "&4starfrost blockgame test 0.0.1"
+#define GAME_APP_TITLE "&4starfrost blockgame test 0.0.1"
 #endif
 
 /* Max number of characters strings can have. */

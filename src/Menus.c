@@ -530,7 +530,7 @@ static struct OptionsGroupScreen {
 	Screen_Body
 	int selectedI;
 	struct FontDesc textFont;
-	struct ButtonWidget btns[8];
+	struct ButtonWidget btns[7];
 	struct TextWidget desc;	
 	struct ButtonWidget done;	
 } OptionsGroupScreen;
@@ -539,12 +539,12 @@ static struct Widget* optGroups_widgets[10] = {
 	(struct Widget*)&OptionsGroupScreen.btns[0], (struct Widget*)&OptionsGroupScreen.btns[1],
 	(struct Widget*)&OptionsGroupScreen.btns[2], (struct Widget*)&OptionsGroupScreen.btns[3],
 	(struct Widget*)&OptionsGroupScreen.btns[4], (struct Widget*)&OptionsGroupScreen.btns[5],
-	(struct Widget*)&OptionsGroupScreen.btns[6], (struct Widget*)&OptionsGroupScreen.btns[7],
+	(struct Widget*)&OptionsGroupScreen.btns[6],
 	(struct Widget*)&OptionsGroupScreen.desc,    (struct Widget*)&OptionsGroupScreen.done
 };
-#define OPTGROUPS_MAX_VERTICES (8 * BUTTONWIDGET_MAX + TEXTWIDGET_MAX + BUTTONWIDGET_MAX)
+#define OPTGROUPS_MAX_VERTICES (7 * BUTTONWIDGET_MAX + TEXTWIDGET_MAX + BUTTONWIDGET_MAX)
 
-static const char* const optsGroup_descs[8] = {
+static const char* const optsGroup_descs[7] = {
 	"&eMusic/Sound, view bobbing, and more",
 	"&eGui scale, font settings, and more",
 	"&eFPS limit, view distance, entity names/shadows",
@@ -552,9 +552,8 @@ static const char* const optsGroup_descs[8] = {
 	"&eChat options",
 	"&eHacks allowed, jump settings, and more",
 	"&eEnv colours, water level, weather, and more",
-	"&eSettings for resembling the original classic",
 };
-static const struct SimpleButtonDesc optsGroup_btns[8] = {
+static const struct SimpleButtonDesc optsGroup_btns[7] = {
 	{ -160, -100, "Misc options...",      Menu_SwitchMisc       },
 	{ -160,  -50, "Gui options...",       Menu_SwitchGui        },
 	{ -160,    0, "Graphics options...",  Menu_SwitchGfx        },
@@ -588,7 +587,7 @@ static void OptionsGroupScreen_ContextRecreated(void* screen) {
 	Gui_MakeTitleFont(&titleFont);
 	Gui_MakeBodyFont(&s->textFont);
 
-	Menu_SetButtons(s->btns, &titleFont, optsGroup_btns, 8);
+	Menu_SetButtons(s->btns, &titleFont, optsGroup_btns, Array_Elems(optsGroup_btns));
 	ButtonWidget_SetConst(&s->done, "Done", &titleFont);
 
 	if (s->selectedI >= 0) OptionsGroupScreen_UpdateDesc(s);
@@ -598,7 +597,7 @@ static void OptionsGroupScreen_ContextRecreated(void* screen) {
 
 static void OptionsGroupScreen_Layout(void* screen) {
 	struct OptionsGroupScreen* s = (struct OptionsGroupScreen*)screen;
-	Menu_LayoutButtons(s->btns, optsGroup_btns, 8);
+	Menu_LayoutButtons(s->btns, optsGroup_btns, Array_Elems(optsGroup_btns));
 	Widget_SetLocation(&s->desc, ANCHOR_CENTRE, ANCHOR_CENTRE, 0, 100);
 	Menu_LayoutBack(&s->done);
 }
@@ -612,7 +611,7 @@ static void OptionsGroupScreen_Init(void* screen) {
 	s->selectedI   = -1;
 	s->maxVertices = OPTGROUPS_MAX_VERTICES;
 
-	Menu_InitButtons(s->btns, 300, optsGroup_btns, 8);
+	Menu_InitButtons(s->btns, 300, optsGroup_btns, Array_Elems(optsGroup_btns));
 	TextWidget_Init(&s->desc);
 	ButtonWidget_Init(&s->done, 400, Menu_SwitchPause);
 }

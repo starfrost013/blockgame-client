@@ -1325,12 +1325,12 @@ void SettingsScreen_SetActive(void) {
 *#########################################################################################################################*/
 static struct ThemesScreen {
 	LScreen_Layout
-	struct LButton btnModern, btnClassic, btnNordic;
+	struct LButton btnModern, btnNordic;
 	struct LButton btnCustom, btnBack;
 } ThemesScreen;
 
 static struct LWidget* themes_widgets[] = {
-	(struct LWidget*)&ThemesScreen.btnModern,  (struct LWidget*)&ThemesScreen.btnClassic,
+	(struct LWidget*)&ThemesScreen.btnModern, 
 	(struct LWidget*)&ThemesScreen.btnNordic, (struct LWidget*)&ThemesScreen.btnCustom,
 	(struct LWidget*)&ThemesScreen.btnBack
 };

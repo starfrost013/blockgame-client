@@ -32,8 +32,6 @@ extern int Game_UserViewDistance;
 extern int     Game_FpsLimit;
 extern int     Game_Vertices;
 
-extern cc_bool Game_AllowServerTextures;
-
 extern cc_bool Game_BreakableLiquids;
 /* Whether a screenshot should be taken at the end of this frame */
 extern cc_bool Game_ScreenshotRequested;
