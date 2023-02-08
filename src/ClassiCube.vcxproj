@@ -264,7 +264,6 @@
     <ClCompile Include="GameVersion.c" />
     <ClCompile Include="Graphics_D3D11.c" />
     <ClCompile Include="Graphics_D3D9.c" />
-    <ClCompile Include="Graphics_GL1.c" />
     <ClCompile Include="Audio.c" />
     <ClCompile Include="Camera.c" />
     <ClCompile Include="AxisLinesRenderer.c" />

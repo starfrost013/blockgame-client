@@ -581,9 +581,6 @@
     <ClCompile Include="Platform_Android.c">
       <Filter>Source Files\Platform</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics_GL1.c">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics_GL2.c">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
