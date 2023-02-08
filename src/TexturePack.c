@@ -392,7 +392,7 @@ static cc_result ExtractFromFile(const cc_string* path) {
 }
 
 static cc_result ExtractDefault(void) {
-	cc_string path = Game_ClassicMode ? defaultPath : TexturePack_Path;
+	cc_string path = TexturePack_Path;
 	cc_result res  = ExtractFromFile(&defaultPath);
 
 	/* override default.zip with user's default texture pack */

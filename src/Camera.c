@@ -109,11 +109,10 @@ static void PerspectiveCamera_CalcViewBobbing(float t, float velTiltScale) {
 
 	struct Matrix tiltY, velX;
 	float vel, fall;
-	if (!Game_ViewBobbing) { 
-		Camera.TiltM     = Matrix_Identity;
-		Camera.TiltPitch = 0.0f;
-		return; 
-	}
+
+	Camera.TiltM = Matrix_Identity;
+	Camera.TiltPitch = 0.0f;
+	return;
 
 	Matrix_RotateZ(&Camera.TiltM, -p->Tilt.TiltX                  * e->Anim.BobStrength);
 	Matrix_RotateX(&tiltY,        Math_AbsF(p->Tilt.TiltY) * 3.0f * e->Anim.BobStrength);
@@ -127,7 +126,7 @@ static void PerspectiveCamera_CalcViewBobbing(float t, float velTiltScale) {
 
 	Matrix_RotateX(&velX, fall);
 	Matrix_MulBy(&Camera.TiltM, &velX);
-	if (!Game_ClassicMode) Camera.TiltPitch = fall;
+	Camera.TiltPitch = fall;
 }
 
 
@@ -247,7 +246,6 @@ static void OnHacksChanged(void* obj) {
 
 void Camera_CycleActive(void) {
 	struct LocalPlayer* p = &LocalPlayer_Instance;
-	if (Game_ClassicMode) return;
 	Camera.Active = Camera.Active->next;
 
 	if (!p->Hacks.CanUseThirdPerson || !p->Hacks.Enabled) {

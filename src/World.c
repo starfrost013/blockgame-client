@@ -38,11 +38,9 @@ static void GenerateNewUuid(void) {
 }
 
 void World_Reset(void) {
-#ifdef EXTENDED_BLOCKS
 	if (World.Blocks != World.Blocks2) Mem_Free(World.Blocks2);
 	World.Blocks2 = NULL;
 	World.IDMask  = 0xFF;
-#endif
 	Mem_Free(World.Blocks);
 	World.Blocks = NULL;
 	String_InitArray(World.Name, nameBuffer);
@@ -68,13 +66,12 @@ void World_SetNewMap(BlockRaw* blocks, int width, int height, int length) {
 	World.Name.length = 0;
 
 	if (!World.Volume) World.Blocks = NULL;
-#ifdef EXTENDED_BLOCKS
+
 	/* .cw maps may have set this to a non-NULL when importing */
 	if (!World.Blocks2) {
 		World.Blocks2 = World.Blocks;
 		World.IDMask  = 0xFF;
 	}
-#endif
 
 	if (Env.EdgeHeight == -1)   { Env.EdgeHeight   = height / 2; }
 	if (Env.CloudsHeight == -1) { Env.CloudsHeight = height + 2; }
@@ -100,12 +97,10 @@ CC_NOINLINE void World_SetDimensions(int width, int height, int length) {
 	World.ChunksCount = World.ChunksX * World.ChunksY * World.ChunksZ;
 }
 
-#ifdef EXTENDED_BLOCKS
 void World_SetMapUpper(BlockRaw* blocks) {
 	World.Blocks2 = blocks;
 	World.IDMask  = 0x3FF;
 }
-#endif
 
 void World_OutOfMemory(void) {
 	Window_ShowDialog("Out of memory", "Not enough free memory to load the map.\nTry joining a different map.");
@@ -113,7 +108,6 @@ void World_OutOfMemory(void) {
 }
 
 
-#ifdef EXTENDED_BLOCKS
 static CC_NOINLINE void LazyInitUpper(int i, BlockID block) {
 	BlockRaw* data = (BlockRaw*)Mem_TryAllocCleared(World.Volume, 1);
 	if (!data) { World_OutOfMemory(); return; }
@@ -134,11 +128,7 @@ void World_SetBlock(int x, int y, int z, BlockID block) {
 	}
 	World.Blocks2[i] = (BlockRaw)(block >> 8);
 }
-#else
-void World_SetBlock(int x, int y, int z, BlockID block) {
-	World.Blocks[World_Pack(x, y, z)] = block; 
-}
-#endif
+
 
 BlockID World_GetPhysicsBlock(int x, int y, int z) {
 	if (y < 0 || !World_ContainsXZ(x, z)) return BLOCK_BEDROCK;

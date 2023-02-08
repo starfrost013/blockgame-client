@@ -24,8 +24,6 @@ extern cc_string Launcher_Username;
 extern cc_bool Launcher_ShowEmptyServers;
 
 struct LauncherTheme {
-	/* Whether to use stone tile background like minecraft.net */
-	cc_bool ClassicBackground;
 	/* Base colour of pixels before any widgets are drawn */
 	BitmapCol BackgroundColor;
 	/* Colour of pixels on the 4 line borders around buttons */

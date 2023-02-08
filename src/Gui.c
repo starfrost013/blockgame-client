@@ -90,16 +90,11 @@ void Gui_ShowDefault(void) {
 }
 
 static void LoadOptions(void) {
-	Gui.DefaultLines    = Game_ClassicMode ? 10 : 12;
+	Gui.DefaultLines = 12;
 	Gui.Chatlines       = Options_GetInt(OPT_CHATLINES, 0, GUI_MAX_CHATLINES, Gui.DefaultLines);
-	Gui.ClickableChat   = !Game_ClassicMode && Options_GetBool(OPT_CLICKABLE_CHAT,   !Input_TouchMode);
-	Gui.TabAutocomplete = !Game_ClassicMode && Options_GetBool(OPT_TAB_AUTOCOMPLETE, true);
+	Gui.ClickableChat   = Options_GetBool(OPT_CLICKABLE_CHAT,   !Input_TouchMode);
+	Gui.TabAutocomplete = Options_GetBool(OPT_TAB_AUTOCOMPLETE, true);
 
-	Gui.ClassicTexture   = Options_GetBool(OPT_CLASSIC_GUI,        true) || Game_ClassicMode;
-	Gui.ClassicTabList   = Options_GetBool(OPT_CLASSIC_TABLIST,   false) || Game_ClassicMode;
-	Gui.ClassicMenu      = Options_GetBool(OPT_CLASSIC_OPTIONS,   false) || Game_ClassicMode;
-	Gui.ClassicChat      = Options_GetBool(OPT_CLASSIC_CHAT,      false) || Game_PureClassic;
-	Gui.ClassicInventory = Options_GetBool(OPT_CLASSIC_INVENTORY, false) || Game_ClassicMode;
 	Gui.ShowFPS          = Options_GetBool(OPT_SHOW_FPS, true);
 	
 	Gui.RawInventoryScale = Options_GetFloat(OPT_INVENTORY_SCALE, 0.25f, 5.0f, 1.0f);
@@ -259,11 +254,7 @@ void Gui_UpdateInputGrab(void) {
 }
 
 void Gui_ShowPauseMenu(void) {
-	if (Gui.ClassicMenu) {
-		ClassicPauseScreen_Show();
-	} else {
-		PauseScreen_Show();
-	}
+	PauseScreen_Show();
 }
 
 void Gui_RenderGui(double delta) {
@@ -502,11 +493,6 @@ static void GuiPngProcess(struct Stream* stream, const cc_string* name) {
 }
 static struct TextureEntry gui_entry = { "gui.png", GuiPngProcess };
 
-static void GuiClassicPngProcess(struct Stream* stream, const cc_string* name) {
-	Game_UpdateTexture(&Gui.GuiClassicTex, stream, name, NULL);
-}
-static struct TextureEntry guiClassic_entry = { "gui_classic.png", GuiClassicPngProcess };
-
 static void IconsPngProcess(struct Stream* stream, const cc_string* name) {
 	Game_UpdateTexture(&Gui.IconsTex, stream, name, NULL);
 }
@@ -549,7 +535,6 @@ static void OnContextLost(void* obj) {
 	if (Gfx.ManagedTextures) return;
 
 	Gfx_DeleteTexture(&Gui.GuiTex);
-	Gfx_DeleteTexture(&Gui.GuiClassicTex);
 	Gfx_DeleteTexture(&Gui.IconsTex);
 	Gfx_DeleteTexture(&Gui.TouchTex);
 }
@@ -557,7 +542,6 @@ static void OnContextLost(void* obj) {
 static void OnInit(void) {
 	Gui.Screens = Gui_Screens; /* for plugins */
 	TextureEntry_Register(&gui_entry);
-	TextureEntry_Register(&guiClassic_entry);
 	TextureEntry_Register(&icons_entry);
 	TextureEntry_Register(&touch_entry);
 

@@ -34,15 +34,9 @@ static void LButton_DrawBase(struct Context2D* ctx, int x, int y, int width, int
 	BitmapCol color = hovered ? Launcher_Theme.ButtonForeActiveColor 
 							  : Launcher_Theme.ButtonForeColor;
 
-	if (Launcher_Theme.ClassicBackground) {
-		Gradient_Noise(ctx, color, 8,
-						x + oneX,       y + oneY,
-						width - twoX,   height - twoY);
-	} else {
-		Gradient_Vertical(ctx, BitmapColor_Offset(color, 8,8,8), BitmapColor_Offset(color, -8,-8,-8),
-						  x + oneX,     y + oneY,
-						  width - twoX, height - twoY);
-	}
+	Gradient_Vertical(ctx, BitmapColor_Offset(color, 8, 8, 8), BitmapColor_Offset(color, -8, -8, -8),
+		x + oneX, y + oneY,
+		width - twoX, height - twoY);
 }
 
 static void LButton_DrawBorder(struct Context2D* ctx, int x, int y, int width, int height) {
@@ -71,20 +65,9 @@ static void LButton_DrawHighlight(struct Context2D* ctx, int x, int y, int width
 	BitmapCol activeColor = BitmapColor_RGB(189, 198, 255);
 	BitmapCol color       = Launcher_Theme.ButtonHighlightColor;
 
-	if (Launcher_Theme.ClassicBackground) {
-		if (hovered) color = activeColor;
-
-		Context2D_Clear(ctx, color,
-						x + twoX,      y + oneY,
-						width - fourX, oneY);
-		Context2D_Clear(ctx, color,
-						x + oneX,      y + twoY,
-						oneX,          height - fourY);
-	} else if (!hovered) {
-		Context2D_Clear(ctx, color,
-						x + twoX,      y + oneY,
-						width - fourX, oneY);
-	}
+	Context2D_Clear(ctx, color,
+		x + twoX, y + oneY,
+		width - fourX, oneY);
 }
 
 void LButton_DrawBackground(struct Context2D* ctx, int x, int y, int width, int height, cc_bool hovered) {
@@ -410,9 +393,8 @@ void LLine_Init(struct LLine* w, int width, const struct LLayout* layouts) {
 	LBackend_LineInit(w, width);
 }
 
-#define CLASSIC_LINE_COLOR BitmapColor_RGB(128, 128, 128)
 BitmapCol LLine_GetColor(void) {
-	return Launcher_Theme.ClassicBackground ? CLASSIC_LINE_COLOR : Launcher_Theme.ButtonBorderColor;
+	return Launcher_Theme.ButtonBorderColor;
 }
 
 
@@ -732,10 +714,6 @@ BitmapCol LTable_RowColor(struct ServerInfo* entry, int row, cc_bool selected) {
 		return selectedColor;
 	}
 
-	if (!Launcher_Theme.ClassicBackground) {
-		return BitmapColor_RGB(20, 20, 10);
-	} else {
-		return (row & 1) == 0 ? Launcher_Theme.BackgroundColor : 0;
-	}
+	return (row & 1) == 0 ? Launcher_Theme.BackgroundColor : 0;
 }
 #endif

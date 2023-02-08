@@ -875,13 +875,8 @@ void LBackend_TableFlagAdded(struct LTable* w) {
 static void LTable_DrawHeaderBackground(struct LTable* w) {
 	BitmapCol gridColor = BitmapColor_RGB(20, 20, 10);
 
-	if (!Launcher_Theme.ClassicBackground) {
-		Context2D_Clear(&framebuffer, gridColor,
-						w->x, w->y, w->width, w->hdrHeight);
-	} else {
-		Launcher_DrawBackground(&framebuffer,
-						w->x, w->y, w->width, w->hdrHeight);
-	}
+	Launcher_DrawBackground(&framebuffer,
+		w->x, w->y, w->width, w->hdrHeight);
 }
 
 static BitmapCol LBackend_TableRowColor(struct LTable* w, int row) {
@@ -918,7 +913,6 @@ static void LTable_DrawRowsBackground(struct LTable* w) {
 /* Draws a gridline below column headers and gridlines after each column */
 static void LTable_DrawGridlines(struct LTable* w) {
 	int i, x;
-	if (Launcher_Theme.ClassicBackground) return;
 
 	x = w->x;
 	Context2D_Clear(&framebuffer, Launcher_Theme.BackgroundColor,
@@ -1001,10 +995,8 @@ static void LTable_DrawRows(struct LTable* w) {
 
 /* Draws scrollbar on the right edge of the table */
 static void LTable_DrawScrollbar(struct LTable* w) {
-	BitmapCol classicBack   = BitmapColor_RGB( 80,  80,  80);
-	BitmapCol classicScroll = BitmapColor_RGB(160, 160, 160);
-	BitmapCol backCol   = Launcher_Theme.ClassicBackground ? classicBack   : Launcher_Theme.ButtonBorderColor;
-	BitmapCol scrollCol = Launcher_Theme.ClassicBackground ? classicScroll : Launcher_Theme.ButtonForeActiveColor;
+	BitmapCol backCol   = Launcher_Theme.ButtonBorderColor;
+	BitmapCol scrollCol = Launcher_Theme.ButtonForeActiveColor;
 
 	int x, y, height;
 	x = w->x + w->width - scrollbarWidth;

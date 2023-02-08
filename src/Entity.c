@@ -925,9 +925,8 @@ static void LocalPlayer_Init(void) {
 	p->Physics.Collisions = &p->Collisions;
 	p->Base.VTABLE   = &localPlayer_VTABLE;
 
-	hacks->Enabled = !Game_PureClassic && Options_GetBool(OPT_HACKS_ENABLED, true);
+	hacks->Enabled = Options_GetBool(OPT_HACKS_ENABLED, true);
 	/* p->Base.Health = 20; TODO: survival mode stuff */
-	if (Game_ClassicMode) return;
 
 	hacks->SpeedMultiplier = Options_GetFloat(OPT_SPEED_FACTOR, 0.1f, 50.0f, 10.0f);
 	hacks->PushbackPlacing = Options_GetBool(OPT_PUSHBACK_PLACING, false);
@@ -1190,11 +1189,9 @@ static void Entities_Init(void) {
 
 	Entities.NamesMode = Options_GetEnum(OPT_NAMES_MODE, NAME_MODE_HOVERED,
 		NameMode_Names, Array_Elems(NameMode_Names));
-	if (Game_ClassicMode) Entities.NamesMode = NAME_MODE_HOVERED;
 
 	Entities.ShadowsMode = Options_GetEnum(OPT_ENTITY_SHADOW, SHADOW_MODE_NONE,
 		ShadowMode_Names, Array_Elems(ShadowMode_Names));
-	if (Game_ClassicMode) Entities.ShadowsMode = SHADOW_MODE_NONE;
 
 	Entities.List[ENTITIES_SELF_ID] = &LocalPlayer_Instance.Base;
 	LocalPlayer_Init();

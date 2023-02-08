@@ -52,23 +52,17 @@ static cc_bool cpe_twoWayPing, cpe_pluginMessages, cpe_extTextures, cpe_extBlock
 *-----------------------------------------------------Common handlers-----------------------------------------------------*
 *#########################################################################################################################*/
 
-#ifndef EXTENDED_BLOCKS
-#define ReadBlock(data, value) value = *data++;
-#else
+
 #define ReadBlock(data, value)\
 if (cpe_extBlocks) {\
 	value = Stream_GetU16_BE(data) % BLOCK_COUNT; data += 2;\
 } else { value = *data++; }
-#endif
 
-#ifndef EXTENDED_BLOCKS
-#define WriteBlock(data, value) *data++ = value;
-#else
 #define WriteBlock(data, value)\
 if (cpe_extBlocks) {\
 	Stream_SetU16_BE(data, value); data += 2;\
 } else { *data++ = (BlockRaw)value; }
-#endif
+
 
 static cc_string UNSAFE_GetString(cc_uint8* data) {
 	int i, length = 0;
@@ -202,7 +196,7 @@ static void WoM_CheckMotd(void) {
 	motd = Server.MOTD;
 	if (!motd.length) return;
 	index = String_IndexOfConst(&motd, "cfg=");
-	if (Game_PureClassic || index == -1) return;
+	if (index == -1) return;
 	
 	host = String_UNSAFE_SubstringAt(&motd, index + 4);
 	String_InitArray(url, urlBuffer);
@@ -292,10 +286,8 @@ struct MapState {
 	int index, sizeIndex;
 	cc_bool allocFailed;
 };
-static struct MapState map1;
-#ifdef EXTENDED_BLOCKS
-static struct MapState map2;
-#endif
+static struct MapState map1; // lower 8 bits
+static struct MapState map2; // upper 8 bits
 
 static void DisconnectInvalidMap(cc_result res) {
 	static const cc_string title  = String_FromConst("Disconnected");
@@ -324,10 +316,8 @@ static CC_INLINE void MapState_SkipHeader(struct MapState* m) {
 static void FreeMapStates(void) {
 	Mem_Free(map1.blocks);
 	map1.blocks = NULL;
-#ifdef EXTENDED_BLOCKS
 	Mem_Free(map2.blocks);
 	map2.blocks = NULL;
-#endif
 }
 
 static cc_result MapState_Read(struct MapState* m) {
@@ -386,7 +376,10 @@ void Classic_SendLogin(void) {
 		/*  and will get stuck waiting for data if client connects using version 5 and only sends 130 bytes */
 		/* To workaround this, include a 'ping packet' after 'version 5 handshake packet' - version 5 server software */
 		/*  will do nothing with the ping packet, and the aforementioned server software will be happy with 131 bytes */
-		data[130] = Game_UseCPE ? 0x42 : (Game_Version.Protocol <= PROTOCOL_0019 ? OPCODE_PING : 0x00);
+
+		// force a CPE client for now
+		// in the future we will remove the distinction entirely
+		data[130] = 0x42;
 	}
 	Server.SendData(data, 131);
 }
@@ -476,9 +469,7 @@ static void Classic_StartLoading(void) {
 	map_volume       = 0;
 
 	MapState_Init(&map1);
-#ifdef EXTENDED_BLOCKS
 	MapState_Init(&map2);
-#endif
 }
 
 static void Classic_LevelInit(cc_uint8* data) {
@@ -491,9 +482,7 @@ static void Classic_LevelInit(cc_uint8* data) {
 	/* Fast map puts volume in header, and uses raw DEFLATE without GZIP header/footer */
 	map_volume = Stream_GetU32_BE(data);
 	MapState_SkipHeader(&map1);
-#ifdef EXTENDED_BLOCKS
 	MapState_SkipHeader(&map2);
-#endif
 }
 
 static void Classic_LevelDataChunk(cc_uint8* data) {
@@ -511,16 +500,13 @@ static void Classic_LevelDataChunk(cc_uint8* data) {
 	map_part.Meta.Mem.Left   = usedLength;
 	map_part.Meta.Mem.Length = usedLength;
 
-#ifndef EXTENDED_BLOCKS
-	m = &map1;
-#else
 	/* progress byte in original classic, but we ignore it */
 	if (cpe_extBlocks && data[1026]) {
 		m = &map2;
-	} else {
+}
+	else {
 		m = &map1;
 	}
-#endif
 
 	if (!m->gzHeader.done) {
 		res = GZipHeader_Read(&map_part, &m->gzHeader);
@@ -547,9 +533,7 @@ static void Classic_LevelFinalise(cc_uint8* data) {
 	map_begunLoading = false;
 	WoM_CheckSendWomID();
 
-#ifdef EXTENDED_BLOCKS
 	if (map2.allocFailed) FreeMapStates();
-#endif
 
 	width  = Stream_GetU16_BE(data + 0);
 	height = Stream_GetU16_BE(data + 2);
@@ -566,11 +550,9 @@ static void Classic_LevelFinalise(cc_uint8* data) {
 		FreeMapStates();
 	}
 	
-#ifdef EXTENDED_BLOCKS
 	/* defer allocation of second map array if possible */
 	if (cpe_extBlocks && map2.blocks) World_SetMapUpper(map2.blocks);
 	map2.blocks = NULL;
-#endif
 	World_SetNewMap(map1.blocks, width, height, length);
 	map1.blocks  = NULL;
 }
@@ -727,7 +709,7 @@ static void Classic_ReadAbsoluteLocation(cc_uint8* data, EntityID id, cc_uint8 f
 	UpdateLocation(id, &update);
 }
 
-#define Classic_HandshakeSize() (Game_Version.Protocol > PROTOCOL_0019 ? 131 : 130)
+#define Classic_HandshakeSize() (131)
 static void Classic_Reset(void) {
 	Stream_ReadonlyMemory(&map_part, NULL, 0);
 	map_begunLoading = false;
@@ -772,7 +754,6 @@ static const char* cpe_clientExtensions[] = {
 	"BlockDefinitions", "BlockDefinitionsExt", "BulkBlockUpdate", "TextColors", "EnvMapAspect",
 	"EntityProperty", "ExtEntityPositions", "TwoWayPing", "InventoryOrder", "InstantMOTD", "FastMap", "SetHotbar",
 	"SetSpawnpoint", "VelocityControl", "CustomParticles", "CustomModels", "PluginMessages", "ExtEntityTeleport",
-	/* NOTE: These must be placed last for when EXTENDED_TEXTURES or EXTENDED_BLOCKS are not defined */
 	"ExtendedTextures", "ExtendedBlocks"
 };
 static void CPE_SetMapEnvUrl(cc_uint8* data);
@@ -857,18 +838,7 @@ static void CPE_SendCpeExtInfoReply(void) {
 
 	if (cpe_serverExtensionsCount) return;
 	
-#ifndef EXTENDED_TEXTURES
-	count--;
-#endif
-#ifndef EXTENDED_BLOCKS
-	count--;
-#endif
 
-#ifdef EXTENDED_BLOCKS
-	if (!Game_AllowCustomBlocks) count -= 3;
-#else
-	if (!Game_AllowCustomBlocks) count -= 2;
-#endif
 	CPE_SendExtInfo(count);
 
 	for (i = 0; i < Array_Elems(cpe_clientExtensions); i++) {
@@ -880,20 +850,6 @@ static void CPE_SendCpeExtInfoReply(void) {
 		if (String_CaselessEqualsConst(&name, "BlockDefinitionsExt")) ver = cpe_blockDefsExtVer;
 		if (String_CaselessEqualsConst(&name, "CustomModels"))        ver = cpe_customModelsVer;
 
-		if (!Game_AllowCustomBlocks) {
-			if (String_CaselessEqualsConst(&name, "BlockDefinitionsExt")) continue;
-			if (String_CaselessEqualsConst(&name, "BlockDefinitions"))    continue;
-#ifdef EXTENDED_BLOCKS
-			if (String_CaselessEqualsConst(&name, "ExtendedBlocks"))      continue;
-#endif
-		}
-
-#ifndef EXTENDED_TEXTURES
-		if (String_CaselessEqualsConst(&name, "ExtendedTextures")) continue;
-#endif
-#ifndef EXTENDED_BLOCKS
-		if (String_CaselessEqualsConst(&name, "ExtendedBlocks")) continue;
-#endif
 		CPE_SendExtEntry(&name, ver);
 	}
 }
@@ -923,8 +879,6 @@ static void CPE_ExtEntry(cc_uint8* data) {
 		cpe_sendHeldBlock = true;
 	} else if (String_CaselessEqualsConst(&ext, "MessageTypes")) {
 		cpe_useMessageTypes = true;
-	} else if (String_CaselessEqualsConst(&ext, "ExtPlayerList")) {
-		Server.SupportsExtPlayerList = true;
 	} else if (String_CaselessEqualsConst(&ext, "BlockPermissions")) {
 		cpe_blockPerms = true;
 	} else if (String_CaselessEqualsConst(&ext, "PlayerClick")) {
@@ -961,16 +915,14 @@ static void CPE_ExtEntry(cc_uint8* data) {
 	} else if (String_CaselessEqualsConst(&ext, "PluginMessages")) {
 		cpe_pluginMessages = true;
 	}
-#ifdef EXTENDED_TEXTURES
+
 	else if (String_CaselessEqualsConst(&ext, "ExtendedTextures")) {
 		Protocol.Sizes[OPCODE_DEFINE_BLOCK]     += 3;
 		Protocol.Sizes[OPCODE_DEFINE_BLOCK_EXT] += 6;
 		cpe_extTextures = true;
 	}
-#endif
-#ifdef EXTENDED_BLOCKS
+
 	else if (String_CaselessEqualsConst(&ext, "ExtendedBlocks")) {
-		if (!Game_AllowCustomBlocks) return;
 		cpe_extBlocks = true;
 
 		Protocol.Sizes[OPCODE_SET_BLOCK] += 1;
@@ -983,7 +935,7 @@ static void CPE_ExtEntry(cc_uint8* data) {
 		Protocol.Sizes[OPCODE_BULK_BLOCK_UPDATE]   += 256 / 4;
 		Protocol.Sizes[OPCODE_SET_HOTBAR]       += 1;
 	}
-#endif
+
 }
 
 static void CPE_SetClickDistance(cc_uint8* data) {
@@ -995,7 +947,6 @@ static void CPE_CustomBlockLevel(cc_uint8* data) {
 	cc_uint8 reply[2] = { OPCODE_CUSTOM_BLOCK_LEVEL, 1 };
 	Server.SendData(reply, 2);
 
-	Game_UseCPEBlocks = true;
 	Event_RaiseVoid(&BlockEvents.PermissionsChanged);
 }
 
@@ -1219,11 +1170,7 @@ static void CPE_BulkBlockUpdate(cc_uint8* data) {
 		if (index < 0 || index >= World.Volume) continue;
 		World_Unpack(index, x, y, z);
 
-#ifdef EXTENDED_BLOCKS
 		Game_UpdateBlock(x, y, z, blocks[i] % BLOCK_COUNT);
-#else
-		Game_UpdateBlock(x, y, z, blocks[i]);
-#endif
 	}
 }
 
@@ -1587,8 +1534,7 @@ static void CPE_Reset(void) {
 	cpe_envMapVer = 2; cpe_blockDefsExtVer = 2; cpe_customModelsVer = 2;
 	cpe_needD3Fix = false; cpe_extEntityPos = false; cpe_twoWayPing = false; 
 	cpe_pluginMessages = false; cpe_extTextures = false; cpe_fastMap = false;
-	cpe_extBlocks = false; Game_UseCPEBlocks = false; cpe_blockPerms = false;
-	if (!Game_UseCPE) return;
+	cpe_extBlocks = false; cpe_blockPerms = false;
 
 	Net_Set(OPCODE_EXT_INFO, CPE_ExtInfo, 67);
 	Net_Set(OPCODE_EXT_ENTRY, CPE_ExtEntry, 69);
@@ -1760,7 +1706,6 @@ static void BlockDefs_DefineBlockExt(cc_uint8* data) {
 }
 
 static void BlockDefs_Reset(void) {
-	if (!Game_UseCPE || !Game_AllowCustomBlocks) return;
 	Net_Set(OPCODE_DEFINE_BLOCK,     BlockDefs_DefineBlock,    80);
 	Net_Set(OPCODE_UNDEFINE_BLOCK,   BlockDefs_UndefineBlock,  2);
 	Net_Set(OPCODE_DEFINE_BLOCK_EXT, BlockDefs_DefineBlockExt, 85);

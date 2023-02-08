@@ -489,10 +489,6 @@ static void NotchyGen_CreateSurfaceLayer(void) {
 }
 
 static void NotchyGen_PlantFlowers(void) {
-	if (Game_Version.Version < VERSION_0023) {
-		return;
-	}
-	
 	int numPatches;
 	BlockRaw block;
 	int patchX,  patchZ;
@@ -527,10 +523,6 @@ static void NotchyGen_PlantFlowers(void) {
 }
 
 static void NotchyGen_PlantMushrooms(void) {
-	if (Game_Version.Version < VERSION_0023) {
-		return;
-	}
-
 	int numPatches, groundHeight;
 	BlockRaw block;
 	int patchX, patchY, patchZ;

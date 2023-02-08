@@ -37,14 +37,13 @@ struct _ServerConnectionData Server;
 *#########################################################################################################################*/
 static void Server_ResetState(void) {
 	Server.Disconnected            = false;
-	Server.SupportsExtPlayerList   = false;
 	Server.SupportsPlayerClick     = false;
 	Server.SupportsPartialMessages = false;
 	Server.SupportsFullCP437       = false;
 }
 
 void Server_RetrieveTexturePack(const cc_string* url) {
-	if (!Game_AllowServerTextures || TextureCache_HasDenied(url)) return;
+	if (TextureCache_HasDenied(url)) return;
 
 	if (!url->length || TextureCache_HasAccepted(url)) {
 		TexturePack_Extract(url);
@@ -118,7 +117,6 @@ static void SPConnection_BeginConnect(void) {
 	static const cc_string logName = String_FromConst("Singleplayer");
 	RNGState rnd;
 	Chat_SetLogName(&logName);
-	Game_UseCPEBlocks = Game_UseCPE;
 
 	/* For when user drops a map file onto ClassiCube.exe */
 	if (SP_AutoloadMap.length) {
@@ -199,7 +197,7 @@ static void SPConnection_Init(void) {
 	Server.SendChat     = SPConnection_SendChat;
 	Server.SendData     = SPConnection_SendData;
 	
-	Server.SupportsFullCP437       = !Game_ClassicMode;
+	Server.SupportsFullCP437 = true; 
 	Server.SupportsPartialMessages = true;
 	Server.IsSinglePlayer          = true;
 }

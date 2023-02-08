@@ -373,15 +373,11 @@ static int CalcRainHeightAt(int x, int maxY, int z, int hIndex) {
 	int i = World_Pack(x, maxY, z), y;
 	cc_uint8 draw;
 
-#ifndef EXTENDED_BLOCKS
-	RainCalcBody(World.Blocks[i]);
-#else
 	if (World.IDMask <= 0xFF) {
 		RainCalcBody(World.Blocks[i]);
 	} else {
 		RainCalcBody(World.Blocks[i] | (World.Blocks2[i] << 8));
 	}
-#endif
 
 	Weather_Heightmap[hIndex] = -1;
 	return -1;

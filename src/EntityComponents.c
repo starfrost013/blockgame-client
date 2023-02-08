@@ -81,7 +81,7 @@ void AnimatedComp_Update(struct Entity* e, Vec3 oldPos, Vec3 newPos, double delt
 	/* TODO: the Tilt code was designed for 60 ticks/second, fix it up for 20 ticks/second */
 	anim->BobStrengthO = anim->BobStrengthN;
 	for (i = 0; i < 3; i++) {
-		AnimatedComp_DoTilt(&anim->BobStrengthN, !Game_ViewBobbing || !e->OnGround);
+		AnimatedComp_DoTilt(&anim->BobStrengthN, !e->OnGround);
 	}
 }
 
@@ -107,7 +107,7 @@ void AnimatedComp_GetCurrent(struct Entity* e, float t) {
 	anim->BobbingVer   = Math_AbsF(Math_SinF(anim->WalkTime)) * anim->Swing * (2.5f/16.0f);
 	anim->BobbingModel = Math_AbsF(Math_CosF(anim->WalkTime)) * anim->Swing * (4.0f/16.0f);
 
-	if (e->Model->calcHumanAnims && !Game_SimpleArmsAnim) {
+	if (e->Model->calcHumanAnims) {
 		AnimatedComp_CalcHumanAnim(anim, idleXRot, idleZRot);
 	}
 }
@@ -193,7 +193,7 @@ static float HacksComp_ParseFlagFloat(const char* flagRaw, struct HacksComp* hac
 	cc_string raw = HacksComp_UNSAFE_FlagValue(flagRaw, hacks);
 	float value;
 
-	if (!raw.length || Game_ClassicMode)   return 1.0f;
+	if (!raw.length)   return 1.0f;
 	if (!Convert_ParseFloat(&raw, &value)) return 1.0f;
 	return value;
 }
@@ -202,7 +202,7 @@ static int HacksComp_ParseFlagInt(const char* flagRaw, struct HacksComp* hacks) 
 	cc_string raw = HacksComp_UNSAFE_FlagValue(flagRaw, hacks);
 	int value;
 
-	if (!raw.length || Game_ClassicMode) return 1;
+	if (!raw.length) return 1;
 	if (!Convert_ParseInt(&raw, &value)) return 1;
 	return value;
 }

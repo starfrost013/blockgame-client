@@ -264,16 +264,12 @@ static cc_bool ReadChunkData(int x1, int y1, int z1, cc_bool* outAllAir) {
 	BlockID block;
 	int xx, yy, zz, y;
 
-#ifndef EXTENDED_BLOCKS
-	ReadChunkBody(blocks[index]);
-#else
 	if (World.IDMask <= 0xFF) {
 		ReadChunkBody(blocks[index]);
 	} else {
 		blocks2 = World.Blocks2;
 		ReadChunkBody(blocks[index] | (blocks2[index] << 8));
 	}
-#endif
 
 	*outAllAir = allAir;
 	return allSolid;
@@ -313,16 +309,12 @@ static cc_bool ReadBorderChunkData(int x1, int y1, int z1, cc_bool* outAllAir) {
 	BlockID block;
 	int xx, yy, zz, x, y, z;
 
-#ifndef EXTENDED_BLOCKS
-	ReadBorderChunkBody(blocks[index]);
-#else
 	if (World.IDMask <= 0xFF) {
 		ReadBorderChunkBody(blocks[index]);
 	} else {
 		blocks2 = World.Blocks2;
 		ReadBorderChunkBody(blocks[index] | (blocks2[index] << 8));
 	}
-#endif
 
 	*outAllAir = allAir;
 	return false;
@@ -1270,7 +1262,7 @@ static void OnInit(void) {
 	Builder_Offsets[FACE_YMIN] = -EXTCHUNK_SIZE_2;
 	Builder_Offsets[FACE_YMAX] =  EXTCHUNK_SIZE_2;
 
-	if (!Game_ClassicMode) Builder_SmoothLighting = Options_GetBool(OPT_SMOOTH_LIGHTING, false);
+	Builder_SmoothLighting = Options_GetBool(OPT_SMOOTH_LIGHTING, false);
 	Builder_ApplyActive();
 }
 

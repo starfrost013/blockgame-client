@@ -50,8 +50,6 @@ CC_VAR extern struct _ServerConnectionData {
 	/* Whether the player has been disconnected from the server */
 	cc_bool Disconnected;
 
-	/* Whether the server supports separate tab list from entities in world */
-	cc_bool SupportsExtPlayerList;
 	/* Whether the server supports packet with detailed info on mouse clicks */
 	cc_bool SupportsPlayerClick;
 	/* Whether the server supports combining multiple chat packets into one */

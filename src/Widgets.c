@@ -131,7 +131,7 @@ static void ButtonWidget_Render(void* widget, double delta) {
 	back = w->active ? btnSelectedTex : btnShadowTex;
 	if (w->disabled) back = btnDisabledTex;
 
-	back.ID = Gui.ClassicTexture ? Gui.GuiClassicTex : Gui.GuiTex;
+	back.ID = Gui.GuiTex;
 	back.X = w->x; back.Width  = w->width;
 	back.Y = w->y; back.Height = w->height;
 
@@ -197,7 +197,7 @@ static void ButtonWidget_BuildMesh(void* widget, struct VertexTextured** vertice
 
 static int ButtonWidget_Render2(void* widget, int offset) {
 	struct ButtonWidget* w = (struct ButtonWidget*)widget;	
-	Gfx_BindTexture(Gui.ClassicTexture ? Gui.GuiClassicTex : Gui.GuiTex);
+	Gfx_BindTexture(Gui.GuiTex);
 	/* TODO: Does this 400 need to take DPI into account */
 	Gfx_DrawVb_IndexedTris_Range(w->width >= 400 ? 4 : 8, offset);
 
@@ -393,7 +393,7 @@ static void HotbarWidget_RenderHotbarOutline(struct HotbarWidget* w) {
 	GfxResourceID tex;
 	int x;
 	
-	tex = Gui.ClassicTexture ? Gui.GuiClassicTex : Gui.GuiTex;
+	tex = Gui.GuiTex;
 	w->backTex.ID = tex;
 	Texture_Render(&w->backTex);
 
@@ -671,7 +671,7 @@ static void TableWidget_RecreateTitle(struct TableWidget* w) {
 }
 
 void TableWidget_RecreateBlocks(struct TableWidget* w) {
-	int max = Game_UseCPEBlocks ? BLOCK_MAX_DEFINED : BLOCK_MAX_ORIGINAL;
+	int max = BLOCK_MAX_DEFINED;
 	int i, begCount, rowEnd;
 	cc_bool emptyRow;
 	BlockID block;
@@ -721,15 +721,19 @@ static void TableWidget_Render(void* widget, double delta) {
 
 	cellSizeX = w->cellSizeX;
 	cellSizeY = w->cellSizeY;
+
+	/* CLASSIC inventory only so commented out
 	if (w->selectedIndex != -1 && Gui.ClassicInventory && w->blocks[w->selectedIndex] != BLOCK_AIR) {
 		TableWidget_GetCoords(w, w->selectedIndex, &x, &y);
 
-		/* TODO: Need two size arguments, in case X/Y dpi differs */
+		/* TODO: Need two size arguments, in case X/Y dpi differs 
 		off  = cellSizeX * 0.1f;
 		size = (int)(cellSizeX + off * 2);
 		Gfx_Draw2DGradient((int)(x - off), (int)(y - off),
 			size, size, topSelColor, bottomSelColor);
 	}
+	*/
+
 	Gfx_SetVertexFormat(VERTEX_FORMAT_TEXTURED);
 
 	IsometricDrawer_BeginBatch(vertices, w->vb);
@@ -767,15 +771,12 @@ void TableWidget_Recreate(struct TableWidget* w) {
 
 static void TableWidget_Reposition(void* widget) {
 	struct TableWidget* w = (struct TableWidget*)widget;
-	cc_bool classic = Gui.ClassicInventory;
 	float scale = Math_SqrtF(w->scale);
-	int cellSize, blockSize;
+	int cellSize = 50, blockSize = 50;
 
-	cellSize     = classic ? 48 : 50;
 	w->cellSizeX = Display_ScaleX(cellSize * scale);
 	w->cellSizeY = Display_ScaleY(cellSize * scale);
 
-	blockSize    = classic ? 40 : 50;
 	blockSize    = Display_ScaleX(blockSize * scale);
 	w->normBlockSize = (blockSize             ) * 0.7f / 2.0f;
 	w->selBlockSize  = (blockSize + 25 * scale) * 0.7f / 2.0f;
@@ -787,7 +788,7 @@ static void TableWidget_Reposition(void* widget) {
 		Widget_CalcPosition(w);
 
 		/* Does the table fit on screen? */
-		if (classic || Table_Y(w) >= 0) break;
+		if (Table_Y(w) >= 0) break;
 		w->rowsVisible--;
 	} while (w->rowsVisible > 1);
 
@@ -907,7 +908,6 @@ static const struct WidgetVTABLE TableWidget_VTABLE = {
 	TableWidget_PointerDown, TableWidget_PointerUp, TableWidget_PointerMove
 };
 void TableWidget_Create(struct TableWidget* w) {
-	cc_bool classic;
 	Widget_Reset(w);
 	w->VTABLE = &TableWidget_VTABLE;
 	w->lastCreatedIndex = -1000;
@@ -918,11 +918,10 @@ void TableWidget_Create(struct TableWidget* w) {
 	w->lastX = -20; w->lastY = -20;
 	w->scale = 1;
 
-	classic     = Gui.ClassicInventory;
-	w->paddingL = Display_ScaleX(classic ? 20 : 15);
-	w->paddingR = Display_ScaleX(classic ? 28 : 15);
-	w->paddingT = Display_ScaleY(classic ? 46 : 35);
-	w->paddingB = Display_ScaleY(classic ? 14 : 15);
+	w->paddingL = Display_ScaleX(15);
+	w->paddingR = Display_ScaleX(15);
+	w->paddingT = Display_ScaleY(35);
+	w->paddingB = Display_ScaleY(15);
 }
 
 void TableWidget_SetBlockTo(struct TableWidget* w, BlockID block) {
@@ -1850,7 +1849,7 @@ static int ChatInputWidget_KeyDown(void* widget, int key) {
 }
 
 static int ChatInputWidget_GetMaxLines(void) {
-	return !Game_ClassicMode && Server.SupportsPartialMessages ? INPUTWIDGET_MAX_LINES : 1;
+	return Server.SupportsPartialMessages ? INPUTWIDGET_MAX_LINES : 1;
 }
 
 static const struct WidgetVTABLE ChatInputWidget_VTABLE = {
@@ -1863,7 +1862,7 @@ void ChatInputWidget_Create(struct ChatInputWidget* w) {
 	w->typingLogPos = Chat_InputLog.count; /* Index of newest entry + 1. */
 	w->base.VTABLE  = &ChatInputWidget_VTABLE;
 
-	w->base.convertPercents = !Game_ClassicMode;
+	w->base.convertPercents = true;
 	w->base.showCaret       = true;
 	w->base.padding         = 5;
 	w->base.GetMaxLines     = ChatInputWidget_GetMaxLines;
@@ -2094,7 +2093,6 @@ static cc_bool TextGroupWidget_GetUrl(struct TextGroupWidget* w, cc_string* text
 	args.useShadow = true;
 	line = TextGroupWidget_UNSAFE_Get(w, index);
 
-	if (Game_ClassicMode) return false;
 	portionsCount = TextGroupWidget_Reduce(w, chars, index, portions);
 
 	for (i = 0, x = 0; i < portionsCount; i++) {

@@ -24,14 +24,6 @@ CC_VAR extern struct _GuiData {
 	struct Screen** Screens;
 	/* The number of screens currently shown. */
 	int ScreensCount;
-	/* Whether vanilla Minecraft Classic gui texture is used. */
-	cc_bool ClassicTexture;
-	/* Whether tab list is laid out like vanilla Minecraft Classic. */
-	cc_bool ClassicTabList;
-	/* Whether menus are laid out like vanilla Minecraft Classic. */
-	cc_bool ClassicMenu;
-	/* Whether classic-style chat screen is used */
-	cc_bool ClassicChat;
 	/* Maximum number of visible chatlines on screen. Can be 0. */
 	int     Chatlines;
 	/* Whether clicking on a chatline inserts it into chat input. */
@@ -40,10 +32,8 @@ CC_VAR extern struct _GuiData {
 	cc_bool TabAutocomplete;
 	/* Whether FPS counter (and other info) is shown in top left. */
 	cc_bool ShowFPS;
-	/* Whether classic-style inventory is used */
-	cc_bool ClassicInventory;
 	float RawHotbarScale, RawChatScale, RawInventoryScale;
-	GfxResourceID GuiTex, GuiClassicTex, IconsTex, TouchTex;
+	GfxResourceID GuiTex, IconsTex, TouchTex;
 	int DefaultLines;
 	/* (internal) Bitmask of on-screen buttons, see Input.h */
 	int _onscreenButtons;
@@ -179,7 +169,6 @@ int Widget_Contains(void* widget, int x, int y);
 /* NOTE: Values are 5 apart to allow plugins to insert custom screens */
 enum GuiPriority {
 	GUI_PRIORITY_DISCONNECT = 60,
-	GUI_PRIORITY_OLDLOADING = 55,
 	GUI_PRIORITY_MENUINPUT  = 57,
 	GUI_PRIORITY_MENU       = 50,
 	GUI_PRIORITY_TOUCHMORE  = 45,

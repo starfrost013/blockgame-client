@@ -294,23 +294,14 @@ void Launcher_Run(void) {
 *#########################################################################################################################*/
 struct LauncherTheme Launcher_Theme;
 const struct LauncherTheme Launcher_ModernTheme = {
-	false,
 	BitmapColor_RGB(153, 127, 172), /* background */
 	BitmapColor_RGB( 97,  81, 110), /* button border */
 	BitmapColor_RGB(189, 168, 206), /* active button */
 	BitmapColor_RGB(141, 114, 165), /* button foreground */
 	BitmapColor_RGB(162, 131, 186), /* button highlight */
 };
-const struct LauncherTheme Launcher_ClassicTheme = {
-	true,
-	BitmapColor_RGB( 41,  41,  41), /* background */
-	BitmapColor_RGB(  0,   0,   0), /* button border */
-	BitmapColor_RGB(126, 136, 191), /* active button */
-	BitmapColor_RGB(111, 111, 111), /* button foreground */
-	BitmapColor_RGB(168, 168, 168), /* button highlight */
-};
+
 const struct LauncherTheme Launcher_NordicTheme = {
-	false,
 	BitmapColor_RGB( 46,  52,  64), /* background */
 	BitmapColor_RGB( 59,  66,  82), /* button border */
 	BitmapColor_RGB( 66,  74,  90), /* active button */
@@ -328,12 +319,8 @@ CC_NOINLINE static void ParseColor(const char* key, BitmapCol* color) {
 }
 
 void Launcher_LoadTheme(void) {
-	if (Options_GetBool(OPT_CLASSIC_MODE, false)) {
-		Launcher_Theme = Launcher_ClassicTheme;
-		return;
-	}
+
 	Launcher_Theme = Launcher_ModernTheme;
-	Launcher_Theme.ClassicBackground = Options_GetBool("nostalgia-classicbg", false);
 
 	ParseColor("launcher-back-col",                   &Launcher_Theme.BackgroundColor);
 	ParseColor("launcher-btn-border-col",             &Launcher_Theme.ButtonBorderColor);
@@ -358,7 +345,6 @@ void Launcher_SaveTheme(void) {
 	SaveColor("launcher-btn-fore-active-col",        Launcher_Theme.ButtonForeActiveColor);
 	SaveColor("launcher-btn-fore-inactive-col",      Launcher_Theme.ButtonForeColor);
 	SaveColor("launcher-btn-highlight-inactive-col", Launcher_Theme.ButtonHighlightColor);
-	Options_SetBool("nostalgia-classicbg",                 Launcher_Theme.ClassicBackground);
 }
 
 
@@ -491,7 +477,7 @@ CC_NOINLINE static void ClearTile(int x, int y, int width, int height,
 }
 
 void Launcher_DrawBackground(struct Context2D* ctx, int x, int y, int width, int height) {
-	if (Launcher_Theme.ClassicBackground && dirtBmp.scan0) {
+	if (dirtBmp.scan0) {
 		ClearTile(x, y, width, height, ctx, &stoneBmp);
 	} else {
 		Gradient_Noise(ctx, Launcher_Theme.BackgroundColor, 6, x, y, width, height);
@@ -499,7 +485,7 @@ void Launcher_DrawBackground(struct Context2D* ctx, int x, int y, int width, int
 }
 
 void Launcher_DrawBackgroundAll(struct Context2D* ctx) {
-	if (Launcher_Theme.ClassicBackground && dirtBmp.scan0) {
+	if (dirtBmp.scan0) {
 		ClearTile(0,        0, ctx->width,               TILESIZE, ctx, &dirtBmp);
 		ClearTile(0, TILESIZE, ctx->width, ctx->height - TILESIZE, ctx, &stoneBmp);
 	} else {
@@ -508,7 +494,7 @@ void Launcher_DrawBackgroundAll(struct Context2D* ctx) {
 }
 
 cc_bool Launcher_BitmappedText(void) {
-	return (useBitmappedFont || Launcher_Theme.ClassicBackground) && hasBitmappedFont;
+	return useBitmappedFont && hasBitmappedFont;
 }
 
 void Launcher_DrawLogo(struct FontDesc* font, const char* text, struct Context2D* ctx) {

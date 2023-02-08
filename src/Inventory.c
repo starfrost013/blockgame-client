@@ -22,7 +22,7 @@ void Inventory_SetSelectedIndex(int index) {
 }
 
 void Inventory_SetHotbarIndex(int index) {
-	if (!Inventory_CheckChangeSelected() || Game_ClassicMode) return;
+	if (!Inventory_CheckChangeSelected()) return;
 	Inventory.Offset = index * INVENTORY_BLOCKS_PER_HOTBAR;
 	Event_RaiseVoid(&UserEvents.HeldBlockChanged);
 }
@@ -50,12 +50,6 @@ void Inventory_SetSelectedBlock(BlockID block) {
 void Inventory_PickBlock(BlockID block) {
 	int i;
 	if (!Inventory_CheckChangeSelected() || Inventory_SelectedBlock == block) return;
-
-	/* Vanilla classic client doesn't let you select these blocks */
-	if (Game_PureClassic) {
-		if (block == BLOCK_GRASS)       block = BLOCK_DIRT;
-		if (block == BLOCK_DOUBLE_SLAB) block = BLOCK_SLAB;
-	}
 
 	/* Try to replace same block */
 	for (i = 0; i < INVENTORY_BLOCKS_PER_HOTBAR; i++) {
@@ -92,9 +86,7 @@ void Inventory_PickBlock(BlockID block) {
 
 /* Returns default block that should go in the given inventory slot */
 static BlockID DefaultMapping(int slot) {
-	if (Game_ClassicMode) {
-		if (slot < Game_Version.InventorySize) return Game_Version.Inventory[slot];
-	}else if (slot < BLOCK_MAX_CPE) {
+	if (slot < BLOCK_MAX_CPE) {
 		return (BlockID)(slot + 1);
 	}
 	return BLOCK_AIR;

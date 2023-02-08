@@ -22,11 +22,11 @@ extern struct IGameComponent World_Component;
 CC_VAR extern struct _WorldData {
 	/* The blocks in the world. */
 	BlockRaw* Blocks;
-#ifdef EXTENDED_BLOCKS
+
 	/* The upper 8 bit of blocks in the world. */
 	/* If only 8 bit blocks are used, equals World_Blocks. */
 	BlockRaw* Blocks2;
-#endif
+
 	/* Volume of the world. */
 	int Volume;
 
@@ -40,11 +40,11 @@ CC_VAR extern struct _WorldData {
 	/* Unique identifier for this world. */
 	cc_uint8 Uuid[WORLD_UUID_LEN];
 
-#ifdef EXTENDED_BLOCKS
+
 	/* Masks access to World.Blocks/World.Blocks2 */
 	/* e.g. this will be 255 if only 8 bit blocks are used */
 	int IDMask;
-#endif
+
 	/* Whether the world has finished loading/generating. */
 	/* NOTE: Blocks may still be NULL. (e.g. error during loading) */
 	cc_bool Loaded;
@@ -73,7 +73,6 @@ CC_API void World_SetNewMap(BlockRaw* blocks, int width, int height, int length)
 CC_NOINLINE void World_SetDimensions(int width, int height, int length);
 void World_OutOfMemory(void);
 
-#ifdef EXTENDED_BLOCKS
 /* Sets World.Blocks2 and updates internal state for more than 256 blocks. */
 void World_SetMapUpper(BlockRaw* blocks);
 
@@ -85,10 +84,6 @@ static CC_INLINE BlockID World_GetBlock(int x, int y, int z) {
 	int i = World_Pack(x, y, z);
 	return (BlockID)World_GetRawBlock(i);
 }
-#else
-#define World_GetBlock(x, y, z) World.Blocks[World_Pack(x, y, z)]
-#define World_GetRawBlock(idx)  World.Blocks[idx]
-#endif
 
 /* If Y is above the map, returns BLOCK_AIR. */
 /* If coordinates are outside the map, returns BLOCK_AIR. */

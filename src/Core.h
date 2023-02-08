@@ -117,19 +117,11 @@ typedef cc_uint8  cc_bool;
 #endif
 #endif
 
-#define EXTENDED_BLOCKS
-#ifdef EXTENDED_BLOCKS
-typedef cc_uint16 BlockID;
-#else
-typedef cc_uint8 BlockID;
-#endif
+// typedefs for easier and more readable code
 
-#define EXTENDED_TEXTURES
-#ifdef EXTENDED_TEXTURES
+typedef cc_uint16 BlockID;
+
 typedef cc_uint16 TextureLoc;
-#else
-typedef cc_uint8 TextureLoc;
-#endif
 
 typedef cc_uint8 BlockRaw;
 typedef cc_uint8 EntityID;

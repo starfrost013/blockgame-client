@@ -138,10 +138,6 @@ static PackedCol Menu_HexCol(const cc_string* str) {
 
 static void Menu_SwitchOptions(void* a, void* b)        { OptionsGroupScreen_Show(); }
 static void Menu_SwitchPause(void* a, void* b)          { Gui_ShowPauseMenu(); }
-static void Menu_SwitchClassicOptions(void* a, void* b) { ClassicOptionsScreen_Show(); }
-
-static void Menu_SwitchKeysClassic(void* a, void* b)      { ClassicKeyBindingsScreen_Show(); }
-static void Menu_SwitchKeysClassicHacks(void* a, void* b) { ClassicHacksKeyBindingsScreen_Show(); }
 static void Menu_SwitchKeysNormal(void* a, void* b)       { NormalKeyBindingsScreen_Show(); }
 static void Menu_SwitchKeysHacks(void* a, void* b)        { HacksKeyBindingsScreen_Show(); }
 static void Menu_SwitchKeysOther(void* a, void* b)        { OtherKeyBindingsScreen_Show(); }
@@ -153,7 +149,6 @@ static void Menu_SwitchGui(void* a, void* b)       { GuiOptionsScreen_Show(); }
 static void Menu_SwitchGfx(void* a, void* b)       { GraphicsOptionsScreen_Show(); }
 static void Menu_SwitchHacks(void* a, void* b)     { HacksSettingsScreen_Show(); }
 static void Menu_SwitchEnv(void* a, void* b)       { EnvSettingsScreen_Show(); }
-static void Menu_SwitchNostalgia(void* a, void* b) { NostalgiaMenuScreen_Show(); }
 
 static void Menu_SwitchGenLevel(void* a, void* b)        { GenLevelScreen_Show(); }
 static void Menu_SwitchClassicGenLevel(void* a, void* b) { ClassicGenScreen_Show(); }
@@ -232,13 +227,11 @@ static void ListScreen_UpdateTitle(struct ListScreen* s) {
 	String_InitArray(str, strBuffer);
 	String_AppendConst(&str, s->titleText);
 
-	if (!Game_ClassicMode) {
-		num   = (s->currentIndex / LIST_SCREEN_ITEMS) + 1;
-		pages = Math_CeilDiv(s->entries.count, LIST_SCREEN_ITEMS);
+	num = (s->currentIndex / LIST_SCREEN_ITEMS) + 1;
+	pages = Math_CeilDiv(s->entries.count, LIST_SCREEN_ITEMS);
 
-		if (pages == 0) pages = 1;
-		String_Format2(&str, " &7(page %i/%i)", &num, &pages);
-	}
+	if (pages == 0) pages = 1;
+	String_Format2(&str, " &7(page %i/%i)", &num, &pages);
 	TextWidget_Set(&s->title, &str, &s->font);
 }
 
@@ -464,7 +457,6 @@ static struct Widget* pause_widgets[] = {
 
 static void PauseScreen_CheckHacksAllowed(void* screen) {
 	struct PauseScreen* s = (struct PauseScreen*)screen;
-	if (Gui.ClassicMenu) return;
 	s->btns[4].disabled = !LocalPlayer_Instance.Hacks.CanAnyHacks; /* select texture pack */
 	s->dirty = true;
 }
@@ -532,69 +524,6 @@ void PauseScreen_Show(void) {
 
 
 /*########################################################################################################################*
-*----------------------------------------------------ClassicPauseScreen---------------------------------------------------*
-*#########################################################################################################################*/
-static struct Widget* classicPause_widgets[] = {
-	(struct Widget*)&PauseScreen.title,
-	(struct Widget*)&PauseScreen.btns[0], (struct Widget*)&PauseScreen.btns[1],
-	(struct Widget*)&PauseScreen.btns[2], (struct Widget*)&PauseScreen.btns[3],
-	(struct Widget*)&PauseScreen.btns[4], (struct Widget*)&PauseScreen.back
-};
-
-static void ClassicPauseScreen_ContextRecreated(void* screen) {
-	struct PauseScreen* s = (struct PauseScreen*)screen;
-	struct FontDesc titleFont;
-	PauseScreenBase_ContextRecreated(s, &titleFont);
-	Font_Free(&titleFont);
-}
-
-static void ClassicPauseScreen_Layout(void* screen) {
-	struct PauseScreen* s = (struct PauseScreen*)screen;
-	Menu_LayoutButtons(s->btns, s->descs, s->descsCount);
-	Widget_SetLocation(&s->back,  ANCHOR_CENTRE, ANCHOR_MAX, 0, Game_ClassicMode ? 80 : 25);
-	Widget_SetLocation(&s->title, ANCHOR_CENTRE, ANCHOR_CENTRE, 0, -150);
-}
-
-static void ClassicPauseScreen_Init(void* screen) {
-	struct PauseScreen* s = (struct PauseScreen*)screen;
-	static const struct SimpleButtonDesc descs[] = {
-		{    0, -100, "Options...",             Menu_SwitchClassicOptions },
-		{    0,  -50, "Generate new level...",  Menu_SwitchClassicGenLevel },
-		{    0,    0, "Save level..",           Menu_SwitchSaveLevel },
-		{    0,   50, "Load level..",           Menu_SwitchLoadLevel },
-		{    0,  100, "Nostalgia options...",   Menu_SwitchNostalgia }
-	};
-	s->widgets    = classicPause_widgets;
-	s->numWidgets = Array_Elems(classicPause_widgets);
-	s->descs      = descs;
-
-	/* Don't show nostalgia options in classic mode */
-	s->descsCount = Game_ClassicMode ? 4    : 5;
-	s->widgets[5] = Game_ClassicMode ? NULL : (struct Widget*)&s->btns[4];
-	PauseScreenBase_Init(s, 400);
-
-	if (Server.IsSinglePlayer) return;
-	s->btns[1].disabled = true;
-	s->btns[3].disabled = true;
-}
-
-static const struct ScreenVTABLE ClassicPauseScreen_VTABLE = {
-	ClassicPauseScreen_Init,   Screen_NullUpdate, Screen_NullFunc, 
-	MenuScreen_Render2,        Screen_BuildMesh,
-	Screen_InputDown,          Screen_InputUp,    Screen_TKeyPress, Screen_TText,
-	Menu_PointerDown,          Screen_PointerUp,  Menu_PointerMove, Screen_TMouseScroll,
-	ClassicPauseScreen_Layout, Screen_ContextLost, ClassicPauseScreen_ContextRecreated
-};
-void ClassicPauseScreen_Show(void) {
-	struct PauseScreen* s = &PauseScreen;
-	s->grabsInput = true;
-	s->closable   = true;
-	s->VTABLE     = &ClassicPauseScreen_VTABLE;
-	Gui_Add((struct Screen*)s, GUI_PRIORITY_MENU);
-}
-
-
-/*########################################################################################################################*
 *--------------------------------------------------OptionsGroupScreen-----------------------------------------------------*
 *#########################################################################################################################*/
 static struct OptionsGroupScreen {
@@ -633,7 +562,6 @@ static const struct SimpleButtonDesc optsGroup_btns[8] = {
 	{  160, -100, "Chat options...",      Menu_SwitchChat       },
 	{  160,  -50, "Hacks settings...",    Menu_SwitchHacks      },
 	{  160,    0, "Env settings...",      Menu_SwitchEnv        },
-	{  160,   50, "Nostalgia options...", Menu_SwitchNostalgia  }
 };
 
 static void OptionsGroupScreen_CheckHacksAllowed(void* screen) {
@@ -1884,7 +1812,7 @@ static void KeyBindsScreen_Init(void* screen) {
 
 	TextWidget_Init(&s->title);
 	TextWidget_Init(&s->msg);
-	ButtonWidget_Init(&s->back, 400, Gui.ClassicMenu ? Menu_SwitchClassicOptions : Menu_SwitchOptions);
+	ButtonWidget_Init(&s->back, 400, Menu_SwitchOptions);
 
 	ButtonWidget_Init(&s->left,  40, s->leftPage);
 	ButtonWidget_Init(&s->right, 40, s->rightPage);
@@ -1927,37 +1855,6 @@ static void KeyBindsScreen_Show(int bindsCount, const cc_uint8* binds, const cha
 	s->binds      = binds;
 	s->descs      = descs;
 	Gui_Add((struct Screen*)s, GUI_PRIORITY_MENU);
-}
-
-
-/*########################################################################################################################*
-*-----------------------------------------------ClassicKeyBindsScreen--------------------------------------------------*
-*#########################################################################################################################*/
-void ClassicKeyBindingsScreen_Show(void) {
-	static const cc_uint8 binds[10]    = { KEYBIND_FORWARD, KEYBIND_BACK, KEYBIND_JUMP, KEYBIND_CHAT, KEYBIND_SET_SPAWN, KEYBIND_LEFT, KEYBIND_RIGHT, KEYBIND_INVENTORY, KEYBIND_FOG, KEYBIND_RESPAWN };
-	static const char* const descs[10] = { "Forward", "Back", "Jump", "Chat", "Save location", "Left", "Right", "Build", "Toggle fog", "Load location" };
-	
-	if (Game_ClassicHacks) {
-		KeyBindsScreen_Reset(NULL, Menu_SwitchKeysClassicHacks, 260);
-	} else {
-		KeyBindsScreen_Reset(NULL,                        NULL, 300);
-	}
-	KeyBindsScreen_SetLayout(-140, -40, 5);
-	KeyBindsScreen_Show(Array_Elems(binds), binds, descs, 
-						Game_ClassicHacks ? "Normal controls" : "Controls");
-}
-
-
-/*########################################################################################################################*
-*--------------------------------------------ClassicHacksKeyBindingsScreen------------------------------------------------*
-*#########################################################################################################################*/
-void ClassicHacksKeyBindingsScreen_Show(void) {
-	static const cc_uint8 binds[6]    = { KEYBIND_SPEED, KEYBIND_NOCLIP, KEYBIND_HALF_SPEED, KEYBIND_FLY, KEYBIND_FLY_UP, KEYBIND_FLY_DOWN };
-	static const char* const descs[6] = { "Speed", "Noclip", "Half speed", "Fly", "Fly up", "Fly down" };
-
-	KeyBindsScreen_Reset(Menu_SwitchKeysClassic, NULL, 260);
-	KeyBindsScreen_SetLayout(-90, -40, 3);
-	KeyBindsScreen_Show(Array_Elems(binds), binds, descs, "Hacks controls");
 }
 
 
@@ -2495,109 +2392,6 @@ void MenuOptionsScreen_Show(struct MenuInputDesc* descs, InitMenuOptions init) {
 }
 
 
-/*########################################################################################################################*
-*---------------------------------------------------ClassicOptionsScreen--------------------------------------------------*
-*#########################################################################################################################*/
-enum ViewDist { VIEW_TINY, VIEW_SHORT, VIEW_NORMAL, VIEW_FAR, VIEW_COUNT };
-static const char* const viewDistNames[VIEW_COUNT] = { "TINY", "SHORT", "NORMAL", "FAR" };
-
-static void ClassicOptionsScreen_GetMusic(cc_string* v) { Menu_GetBool(v, Audio_MusicVolume > 0); }
-static void ClassicOptionsScreen_SetMusic(const cc_string* v) {
-	Audio_SetMusic(String_CaselessEqualsConst(v, "ON") ? 100 : 0);
-	Options_SetInt(OPT_MUSIC_VOLUME, Audio_MusicVolume);
-}
-
-static void ClassicOptionsScreen_GetInvert(cc_string* v) { Menu_GetBool(v, Camera.Invert); }
-static void ClassicOptionsScreen_SetInvert(const cc_string* v) { Camera.Invert = Menu_SetBool(v, OPT_INVERT_MOUSE); }
-
-static void ClassicOptionsScreen_GetViewDist(cc_string* v) {
-	if (Game_ViewDistance >= 512) {
-		String_AppendConst(v, viewDistNames[VIEW_FAR]);
-	} else if (Game_ViewDistance >= 128) {
-		String_AppendConst(v, viewDistNames[VIEW_NORMAL]);
-	} else if (Game_ViewDistance >= 32) {
-		String_AppendConst(v, viewDistNames[VIEW_SHORT]);
-	} else {
-		String_AppendConst(v, viewDistNames[VIEW_TINY]);
-	}
-}
-static void ClassicOptionsScreen_SetViewDist(const cc_string* v) {
-	int raw  = Utils_ParseEnum(v, 0, viewDistNames, VIEW_COUNT);
-	int dist = raw == VIEW_FAR ? 512 : (raw == VIEW_NORMAL ? 128 : (raw == VIEW_SHORT ? 32 : 8));
-	Game_UserSetViewDistance(dist);
-}
-
-static void ClassicOptionsScreen_GetPhysics(cc_string* v) { Menu_GetBool(v, Physics.Enabled); }
-static void ClassicOptionsScreen_SetPhysics(const cc_string* v) {
-	Physics_SetEnabled(Menu_SetBool(v, OPT_BLOCK_PHYSICS));
-}
-
-static void ClassicOptionsScreen_GetSounds(cc_string* v) { Menu_GetBool(v, Audio_SoundsVolume > 0); }
-static void ClassicOptionsScreen_SetSounds(const cc_string* v) {
-	Audio_SetSounds(String_CaselessEqualsConst(v, "ON") ? 100 : 0);
-	Options_SetInt(OPT_SOUND_VOLUME, Audio_SoundsVolume);
-}
-
-static void ClassicOptionsScreen_GetShowFPS(cc_string* v) { Menu_GetBool(v, Gui.ShowFPS); }
-static void ClassicOptionsScreen_SetShowFPS(const cc_string* v) { Gui.ShowFPS = Menu_SetBool(v, OPT_SHOW_FPS); }
-
-static void ClassicOptionsScreen_GetViewBob(cc_string* v) { Menu_GetBool(v, Game_ViewBobbing); }
-static void ClassicOptionsScreen_SetViewBob(const cc_string* v) { Game_ViewBobbing = Menu_SetBool(v, OPT_VIEW_BOBBING); }
-
-static void ClassicOptionsScreen_GetHacks(cc_string* v) { Menu_GetBool(v, LocalPlayer_Instance.Hacks.Enabled); }
-static void ClassicOptionsScreen_SetHacks(const cc_string* v) {
-	LocalPlayer_Instance.Hacks.Enabled = Menu_SetBool(v, OPT_HACKS_ENABLED);
-	HacksComp_Update(&LocalPlayer_Instance.Hacks);
-}
-
-static void ClassicOptionsScreen_RecreateExtra(struct MenuOptionsScreen* s) {
-	ButtonWidget_SetConst(&s->buttons[9], "Controls...", &s->titleFont);
-}
-
-static void ClassicOptionsScreen_InitWidgets(struct MenuOptionsScreen* s) {
-	static const struct MenuOptionDesc buttons[] = {
-		{ -1, -150, "Music",           MenuOptionsScreen_Bool,
-			ClassicOptionsScreen_GetMusic,    ClassicOptionsScreen_SetMusic },
-		{ -1, -100, "Invert mouse",    MenuOptionsScreen_Bool,
-			ClassicOptionsScreen_GetInvert,   ClassicOptionsScreen_SetInvert },
-		{ -1,  -50, "Render distance", MenuOptionsScreen_Enum,
-			ClassicOptionsScreen_GetViewDist, ClassicOptionsScreen_SetViewDist },
-		{ -1,    0, "Block physics",   MenuOptionsScreen_Bool,
-			ClassicOptionsScreen_GetPhysics,  ClassicOptionsScreen_SetPhysics },
-
-		{ 1, -150, "Sound",         MenuOptionsScreen_Bool,
-			ClassicOptionsScreen_GetSounds,  ClassicOptionsScreen_SetSounds },
-		{ 1, -100, "Show FPS",      MenuOptionsScreen_Bool,
-			ClassicOptionsScreen_GetShowFPS, ClassicOptionsScreen_SetShowFPS },
-		{ 1,  -50, "View bobbing",  MenuOptionsScreen_Bool,
-			ClassicOptionsScreen_GetViewBob, ClassicOptionsScreen_SetViewBob },
-		{ 1,    0, "FPS mode",      MenuOptionsScreen_Enum,
-			MenuOptionsScreen_GetFPS,        MenuOptionsScreen_SetFPS },
-		{ 0,   60, "Hacks enabled", MenuOptionsScreen_Bool,
-			ClassicOptionsScreen_GetHacks,   ClassicOptionsScreen_SetHacks }
-	};
-	s->numCore         = 9 + 1;
-	s->maxVertices    += 9 * BUTTONWIDGET_MAX + BUTTONWIDGET_MAX;
-	s->DoRecreateExtra = ClassicOptionsScreen_RecreateExtra;
-
-	MenuOptionsScreen_InitButtons(s, buttons, Array_Elems(buttons), Menu_SwitchPause);
-	ButtonWidget_Make(&s->buttons[9], 400, Menu_SwitchKeysClassic,
-						ANCHOR_CENTRE, ANCHOR_MAX, 0, 95);
-	s->widgets[9] = (struct Widget*)&s->buttons[9];
-
-	/* Disable certain options */
-	if (!Server.IsSinglePlayer) Menu_Remove(s, 3);
-	if (!Game_ClassicHacks)     Menu_Remove(s, 8);
-}
-
-void ClassicOptionsScreen_Show(void) {
-	static struct MenuInputDesc descs[11];
-	MenuInput_Enum(descs[2], viewDistNames,  VIEW_COUNT);
-	MenuInput_Enum(descs[7], FpsLimit_Names, FPS_LIMIT_COUNT);
-
-	MenuOptionsScreen_Show(descs, ClassicOptionsScreen_InitWidgets);
-}
-
 
 /*########################################################################################################################*
 *----------------------------------------------------EnvSettingsScreen----------------------------------------------------*
@@ -3041,9 +2835,6 @@ static void MiscOptionsScreen_SetSounds(const cc_string* v) {
 	Audio_SetSounds(Menu_Int(v));
 }
 
-static void MiscOptionsScreen_GetViewBob(cc_string* v) { Menu_GetBool(v, Game_ViewBobbing); }
-static void MiscOptionsScreen_SetViewBob(const cc_string* v) { Game_ViewBobbing = Menu_SetBool(v, OPT_VIEW_BOBBING); }
-
 static void MiscOptionsScreen_GetPhysics(cc_string* v) { Menu_GetBool(v, Physics.Enabled); }
 static void MiscOptionsScreen_SetPhysics(const cc_string* v) {
 	Physics_SetEnabled(Menu_SetBool(v, OPT_BLOCK_PHYSICS));
@@ -3066,9 +2857,6 @@ static void MiscSettingsScreen_InitWidgets(struct MenuOptionsScreen* s) {
 			MiscOptionsScreen_GetMusic,       MiscOptionsScreen_SetMusic },
 		{ -1,    0, "Sounds volume",  MenuOptionsScreen_Input,
 			MiscOptionsScreen_GetSounds,      MiscOptionsScreen_SetSounds },
-		{ -1,   50, "View bobbing",   MenuOptionsScreen_Bool,
-			MiscOptionsScreen_GetViewBob,     MiscOptionsScreen_SetViewBob },
-	
 		{ 1, -100, "Block physics",       MenuOptionsScreen_Bool,
 			MiscOptionsScreen_GetPhysics,     MiscOptionsScreen_SetPhysics },
 		{ 1,    0, "Invert mouse",        MenuOptionsScreen_Bool,
@@ -3076,8 +2864,8 @@ static void MiscSettingsScreen_InitWidgets(struct MenuOptionsScreen* s) {
 		{ 1,   50, "Mouse sensitivity",   MenuOptionsScreen_Input,
 			MiscOptionsScreen_GetSensitivity, MiscOptionsScreen_SetSensitivity }
 	};
-	s->numCore      = 7;
-	s->maxVertices += 7 * BUTTONWIDGET_MAX;
+	s->numCore      = Array_Elems(buttons);
+	s->maxVertices += Array_Elems(buttons) * BUTTONWIDGET_MAX;
 	MenuOptionsScreen_InitButtons(s, buttons, Array_Elems(buttons), Menu_SwitchOptions);
 
 	/* Disable certain options */
@@ -3098,205 +2886,6 @@ void MiscOptionsScreen_Show(void) {
 
 	MenuOptionsScreen_Show(descs, MiscSettingsScreen_InitWidgets);
 }
-
-
-/*########################################################################################################################*
-*--------------------------------------------------NostalgiaMenuScreen-----------------------------------------------------*
-*#########################################################################################################################*/
-static struct NostalgiaMenuScreen {
-	Screen_Body
-	struct ButtonWidget btnA, btnF, done;
-	struct TextWidget title;
-} NostalgiaMenuScreen;
-
-static struct Widget* nostalgiaMenu_widgets[] = {
-	(struct Widget*)&NostalgiaMenuScreen.btnA, (struct Widget*)&NostalgiaMenuScreen.btnF,
-	(struct Widget*)&NostalgiaMenuScreen.done, (struct Widget*)&NostalgiaMenuScreen.title
-};
-#define NOSTALGIA_MENU_MAX_VERTICES (3 * BUTTONWIDGET_MAX + TEXTWIDGET_MAX)
-
-static void NostalgiaMenuScreen_Appearance(void* a, void* b)    { NostalgiaAppearanceScreen_Show(); }
-static void NostalgiaMenuScreen_Functionality(void* a, void* b) { NostalgiaFunctionalityScreen_Show(); }
-
-static void NostalgiaMenuScreen_SwitchBack(void* a, void* b) {
-	if (Gui.ClassicMenu) { Menu_SwitchPause(a, b); } else { Menu_SwitchOptions(a, b); }
-}
-
-static void NostalgiaMenuScreen_ContextRecreated(void* screen) {
-	struct NostalgiaMenuScreen* s = (struct NostalgiaMenuScreen*)screen;
-	struct FontDesc titleFont;
-	Screen_UpdateVb(screen);
-	Gui_MakeTitleFont(&titleFont);
-
-	TextWidget_SetConst(&s->title, "Nostalgia options", &titleFont);
-	ButtonWidget_SetConst(&s->btnA, "Appearance",       &titleFont);
-	ButtonWidget_SetConst(&s->btnF, "Functionality",    &titleFont);
-	ButtonWidget_SetConst(&s->done,    "Done",          &titleFont);
-
-	Font_Free(&titleFont);
-}
-
-static void NostalgiaMenuScreen_Layout(void* screen) {
-	struct NostalgiaMenuScreen* s = (struct NostalgiaMenuScreen*)screen;
-	Widget_SetLocation(&s->title, ANCHOR_CENTRE, ANCHOR_CENTRE, 0, -100);
-	Widget_SetLocation(&s->btnA,  ANCHOR_CENTRE, ANCHOR_CENTRE, 0,  -25);
-	Widget_SetLocation(&s->btnF,  ANCHOR_CENTRE, ANCHOR_CENTRE, 0,   25);
-	Menu_LayoutBack(&s->done);
-}
-
-static void NostalgiaMenuScreen_Init(void* screen) {
-	struct NostalgiaMenuScreen* s = (struct NostalgiaMenuScreen*)screen;
-
-	s->widgets     = nostalgiaMenu_widgets;
-	s->numWidgets  = Array_Elems(nostalgiaMenu_widgets);
-	s->maxVertices = NOSTALGIA_MENU_MAX_VERTICES;
-
-	TextWidget_Init(&s->title);
-	ButtonWidget_Init(&s->btnA, 400, NostalgiaMenuScreen_Appearance);
-	ButtonWidget_Init(&s->btnF, 400, NostalgiaMenuScreen_Functionality);
-	ButtonWidget_Init(&s->done, 400, NostalgiaMenuScreen_SwitchBack);
-}
-
-static const struct ScreenVTABLE NostalgiaMenuScreen_VTABLE = {
-	NostalgiaMenuScreen_Init,  Screen_NullUpdate, Screen_NullFunc,
-	MenuScreen_Render2,        Screen_BuildMesh,
-	Screen_InputDown,          Screen_InputUp,    Screen_TKeyPress, Screen_TText,
-	Menu_PointerDown,          Screen_PointerUp,  Menu_PointerMove, Screen_TMouseScroll,
-	NostalgiaMenuScreen_Layout, Screen_ContextLost, NostalgiaMenuScreen_ContextRecreated
-};
-void NostalgiaMenuScreen_Show(void) {
-	struct NostalgiaMenuScreen* s = &NostalgiaMenuScreen;
-	s->grabsInput = true;
-	s->closable   = true;
-	s->VTABLE     = &NostalgiaMenuScreen_VTABLE;
-	Gui_Add((struct Screen*)s, GUI_PRIORITY_MENU);
-}
-
-
-/*########################################################################################################################*
-*------------------------------------------------NostalgiaAppearanceScreen------------------------------------------------*
-*#########################################################################################################################*/
-static void NostalgiaScreen_GetHand(cc_string* v) { Menu_GetBool(v, Models.ClassicArms); }
-static void NostalgiaScreen_SetHand(const cc_string* v) { Models.ClassicArms = Menu_SetBool(v, OPT_CLASSIC_ARM_MODEL); }
-
-static void NostalgiaScreen_GetAnim(cc_string* v) { Menu_GetBool(v, !Game_SimpleArmsAnim); }
-static void NostalgiaScreen_SetAnim(const cc_string* v) {
-	Game_SimpleArmsAnim = String_CaselessEqualsConst(v, "OFF");
-	Options_SetBool(OPT_SIMPLE_ARMS_ANIM, Game_SimpleArmsAnim);
-}
-
-static void NostalgiaScreen_GetClassicChat(cc_string* v) { Menu_GetBool(v, Gui.ClassicChat); }
-static void NostalgiaScreen_SetClassicChat(const cc_string* v) { Gui.ClassicChat = Menu_SetBool(v, OPT_CLASSIC_CHAT); }
-
-static void NostalgiaScreen_GetClassicInv(cc_string* v) { Menu_GetBool(v, Gui.ClassicInventory); }
-static void NostalgiaScreen_SetClassicInv(const cc_string* v) { Gui.ClassicInventory = Menu_SetBool(v, OPT_CLASSIC_INVENTORY); }
-
-static void NostalgiaScreen_GetGui(cc_string* v) { Menu_GetBool(v, Gui.ClassicTexture); }
-static void NostalgiaScreen_SetGui(const cc_string* v) { Gui.ClassicTexture = Menu_SetBool(v, OPT_CLASSIC_GUI); }
-
-static void NostalgiaScreen_GetList(cc_string* v) { Menu_GetBool(v, Gui.ClassicTabList); }
-static void NostalgiaScreen_SetList(const cc_string* v) { Gui.ClassicTabList = Menu_SetBool(v, OPT_CLASSIC_TABLIST); }
-
-static void NostalgiaScreen_GetOpts(cc_string* v) { Menu_GetBool(v, Gui.ClassicMenu); }
-static void NostalgiaScreen_SetOpts(const cc_string* v) { Gui.ClassicMenu = Menu_SetBool(v, OPT_CLASSIC_OPTIONS); }
-
-static void NostalgiaAppearanceScreen_InitWidgets(struct MenuOptionsScreen* s) {
-	static const struct MenuOptionDesc buttons[] = {
-		{ -1, -100, "Classic hand model",   MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetHand,   NostalgiaScreen_SetHand },
-		{ -1,  -50, "Classic walk anim",    MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetAnim,   NostalgiaScreen_SetAnim },
-        { -1,    0, "Classic chat",    MenuOptionsScreen_Bool,
-            NostalgiaScreen_GetClassicChat, NostalgiaScreen_SetClassicChat },
-		{ -1,  50, "Classic inventory", MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetClassicInv,  NostalgiaScreen_SetClassicInv },
-		{  1,  -50, "Classic GUI textures", MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetGui,    NostalgiaScreen_SetGui },
-		{  1,    0, "Classic player list",  MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetList,   NostalgiaScreen_SetList },
-		{  1,   50, "Classic options",      MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetOpts,   NostalgiaScreen_SetOpts },
-	};
-	s->numCore         = Array_Elems(buttons);
-	s->maxVertices    += Array_Elems(buttons) * BUTTONWIDGET_MAX;
-
-	MenuOptionsScreen_InitButtons(s, buttons, Array_Elems(buttons), Menu_SwitchNostalgia);
-}
-
-void NostalgiaAppearanceScreen_Show(void) {
-	MenuOptionsScreen_Show(NULL, NostalgiaAppearanceScreen_InitWidgets);
-}
-
-
-/*########################################################################################################################*
-*----------------------------------------------NostalgiaFunctionalityScreen-----------------------------------------------*
-*#########################################################################################################################*/
-static void NostalgiaScreen_UpdateVersionDisabled(void) {
-	MenuOptionsScreen_Instance.buttons[3].disabled = Game_UseCPE;
-}
-
-static void NostalgiaScreen_GetTexs(cc_string* v) { Menu_GetBool(v, Game_AllowServerTextures); }
-static void NostalgiaScreen_SetTexs(const cc_string* v) { Game_AllowServerTextures = Menu_SetBool(v, OPT_SERVER_TEXTURES); }
-
-static void NostalgiaScreen_GetCustom(cc_string* v) { Menu_GetBool(v, Game_AllowCustomBlocks); }
-static void NostalgiaScreen_SetCustom(const cc_string* v) { Game_AllowCustomBlocks = Menu_SetBool(v, OPT_CUSTOM_BLOCKS); }
-
-static void NostalgiaScreen_GetCPE(cc_string* v) { Menu_GetBool(v, Game_UseCPE); }
-static void NostalgiaScreen_SetCPE(const cc_string* v) {
-	Game_UseCPE = Menu_SetBool(v, OPT_CPE); 
-	NostalgiaScreen_UpdateVersionDisabled();
-}
-
-static void NostalgiaScreen_Version(void* screen, void* widget) {
-	struct MenuOptionsScreen* s = (struct MenuOptionsScreen*)screen;
-	int ver = Game_Version.Version - 1;
-	if (ver < VERSION_0017) ver = VERSION_0030;
-
-	Options_SetInt(OPT_GAME_VERSION, ver);
-	GameVersion_Load();
-	MenuOptionsScreen_Update(s, Screen_Index(s, widget));
-}
-
-static void NostalgiaScreen_GetVersion(cc_string* v) { String_AppendConst(v, Game_Version.Name); }
-static void NostalgiaScreen_SetVersion(const cc_string* v) { }
-
-static struct TextWidget nostalgia_desc;
-static void NostalgiaScreen_RecreateExtra(struct MenuOptionsScreen* s) {
-	TextWidget_SetConst(&nostalgia_desc, "&eRequires restarting game to take full effect", &s->textFont);
-}
-
-static void NostalgiaFunctionalityScreen_InitWidgets(struct MenuOptionsScreen* s) {
-	static const struct MenuOptionDesc buttons[] = {
-		{ -1, -50, "Use server textures",  MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetTexs,    NostalgiaScreen_SetTexs },
-		{ -1,   0, "Allow custom blocks",  MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetCustom,  NostalgiaScreen_SetCustom },
-
-		{  1, -50, "Non-classic features", MenuOptionsScreen_Bool,
-			NostalgiaScreen_GetCPE,     NostalgiaScreen_SetCPE },
-		{  1,   0, "Game version",         NostalgiaScreen_Version,
-			NostalgiaScreen_GetVersion, NostalgiaScreen_SetVersion }
-	};
-	s->numCore         = Array_Elems(buttons) + 1;
-	s->maxVertices    += Array_Elems(buttons) * BUTTONWIDGET_MAX + TEXTWIDGET_MAX;
-	s->DoRecreateExtra = NostalgiaScreen_RecreateExtra;
-
-	MenuOptionsScreen_InitButtons(s, buttons, Array_Elems(buttons), Menu_SwitchNostalgia);
-	TextWidget_Init(&nostalgia_desc);
-	Widget_SetLocation(&nostalgia_desc, ANCHOR_CENTRE, ANCHOR_CENTRE, 0, 100);
-	s->widgets[4] = (struct Widget*)&nostalgia_desc;
-
-	NostalgiaScreen_UpdateVersionDisabled();
-	s->descriptions[3] = \
-		"&eNote that support for versions earlier than 0.30 is incomplete.\n" \
-		"\n" \
-		"&cNote that some servers only support 0.30 game version";
-}
-
-void NostalgiaFunctionalityScreen_Show(void) {
-	MenuOptionsScreen_Show(NULL, NostalgiaFunctionalityScreen_InitWidgets);
-}
-
 
 /*########################################################################################################################*
 *---------------------------------------------------------Overlay---------------------------------------------------------*

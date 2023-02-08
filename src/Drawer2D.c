@@ -674,11 +674,10 @@ static void OnReset(void) {
 
 static void OnInit(void) {
 	OnReset();
-	Drawer2D.BitmappedText    = Game_ClassicMode || !Options_GetBool(OPT_USE_CHAT_FONT, false);
+	Drawer2D.BitmappedText    = !Options_GetBool(OPT_USE_CHAT_FONT, false);
 	Drawer2D.BlackTextShadows = Options_GetBool(OPT_BLACK_TEXT, false);
 
 	Options_Get(OPT_FONT_NAME, &font_default, "");
-	if (Game_ClassicMode) font_default.length = 0;
 	TextureEntry_Register(&default_entry);
 }
 

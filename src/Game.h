@@ -19,7 +19,6 @@ CC_VAR extern struct _GameData {
 /* Stopwatch measurement of when current frame started */
 extern cc_uint64 Game_FrameStart;
 extern struct RayTracer Game_SelectedPos;
-extern cc_bool Game_UseCPEBlocks;
 
 extern cc_string Game_Username;
 extern cc_string Game_Mppass;
@@ -31,17 +30,10 @@ extern int Game_UserViewDistance;
 
 /* Strategy used to limit FPS (see FpsLimitMethod enum) */
 extern int     Game_FpsLimit;
-extern cc_bool Game_SimpleArmsAnim;
 extern int     Game_Vertices;
 
-extern cc_bool Game_ClassicMode;
-extern cc_bool Game_ClassicHacks;
-#define Game_PureClassic (Game_ClassicMode && !Game_ClassicHacks)
-extern cc_bool Game_AllowCustomBlocks;
-extern cc_bool Game_UseCPE;
 extern cc_bool Game_AllowServerTextures;
 
-extern cc_bool Game_ViewBobbing;
 extern cc_bool Game_BreakableLiquids;
 /* Whether a screenshot should be taken at the end of this frame */
 extern cc_bool Game_ScreenshotRequested;
@@ -49,7 +41,7 @@ extern cc_bool Game_HideGui;
 extern cc_bool Game_DefaultZipMissing;
 
 enum GAME_VERSION_ {
-	VERSION_0017 = 27, VERSION_0019 = 28, VERSION_0023 = 29, VERSION_0030 = 30, VERSION_CPE = 31
+	VERSION_CPE = 31
 };
 struct GameVersion { 
 	const char* Name; 

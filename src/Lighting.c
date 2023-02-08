@@ -32,15 +32,11 @@ static int ClassicLighting_CalcHeightAt(int x, int maxY, int z, int hIndex) {
 	BlockID block;
 	int y, offset;
 
-#ifndef EXTENDED_BLOCKS
-	ClassicLighting_CalcBody(World.Blocks[i]);
-#else
 	if (World.IDMask <= 0xFF) {
 		ClassicLighting_CalcBody(World.Blocks[i]);
 	} else {
 		ClassicLighting_CalcBody(World.Blocks[i] | (World.Blocks2[i] << 8));
 	}
-#endif
 
 	classic_heightmap[hIndex] = -10;
 	return -10;
@@ -153,15 +149,11 @@ static cc_bool ClassicLighting_NeedsNeighour(BlockID block, int i, int minY, int
 	BlockID other;
 	cc_bool affected;
 
-#ifndef EXTENDED_BLOCKS
-	Lighting_NeedsNeighourBody(World.Blocks[i]);
-#else
 	if (World.IDMask <= 0xFF) {
 		ClassicLighting_NeedsNeighourBody(World.Blocks[i]);
 	} else {
 		ClassicLighting_NeedsNeighourBody(World.Blocks[i] | (World.Blocks2[i] << 8));
 	}
-#endif
 	return false;
 }
 
@@ -320,15 +312,12 @@ static cc_bool Heightmap_CalculateCoverage(int x1, int z1, int xCount, int zCoun
 	int mapIndex, hIndex, baseIndex, index;
 	int x, y, z;
 
-#ifndef EXTENDED_BLOCKS
-	Heightmap_CalculateBody(World.Blocks[mapIndex]);
-#else
 	if (World.IDMask <= 0xFF) {
 		Heightmap_CalculateBody(World.Blocks[mapIndex]);
-	} else {
+	}
+	else {
 		Heightmap_CalculateBody(World.Blocks[mapIndex] | (World.Blocks2[mapIndex] << 8));
 	}
-#endif
 	return false;
 }
 

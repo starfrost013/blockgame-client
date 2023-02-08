@@ -138,120 +138,12 @@ CC_NOINLINE static void LScreen_Reset(struct LScreen* s) {
 	s->selectedWidget = NULL;
 }
 
-static void SwitchToChooseMode(void* w)    { ChooseModeScreen_SetActive(false); }
 static void SwitchToColours(void* w)       { ColoursScreen_SetActive(); }
 static void SwitchToDirectConnect(void* w) { DirectConnectScreen_SetActive(); }
 static void SwitchToMain(void* w)          { MainScreen_SetActive(); }
 static void SwitchToSettings(void* w)      { SettingsScreen_SetActive(); }
 static void SwitchToThemes(void* w)        { ThemesScreen_SetActive(); }
 static void SwitchToUpdates(void* w)       { UpdatesScreen_SetActive(); }
-
-
-/*########################################################################################################################*
-*-------------------------------------------------------ChooseModeScreen--------------------------------------------------*
-*#########################################################################################################################*/
-static struct ChooseModeScreen {
-	LScreen_Layout
-	struct LLine seps[2];
-	struct LButton btnEnhanced, btnClassicHax, btnClassic, btnBack;
-	struct LLabel  lblHelp, lblEnhanced[2], lblClassicHax[2], lblClassic[2];
-	cc_bool firstTime;
-} ChooseModeScreen;
-
-static struct LWidget* chooseMode_widgets[] = {
-	(struct LWidget*)&ChooseModeScreen.seps[0],      (struct LWidget*)&ChooseModeScreen.seps[1],
-	(struct LWidget*)&ChooseModeScreen.btnEnhanced,  (struct LWidget*)&ChooseModeScreen.lblEnhanced[0],  (struct LWidget*)&ChooseModeScreen.lblEnhanced[1],
-	(struct LWidget*)&ChooseModeScreen.btnClassicHax,(struct LWidget*)&ChooseModeScreen.lblClassicHax[0],(struct LWidget*)&ChooseModeScreen.lblClassicHax[1],
-	(struct LWidget*)&ChooseModeScreen.btnClassic,   (struct LWidget*)&ChooseModeScreen.lblClassic[0],   (struct LWidget*)&ChooseModeScreen.lblClassic[1],
-	NULL
-};
-
-LAYOUTS mode_seps0[] = { { ANCHOR_CENTRE, -5 }, { ANCHOR_CENTRE, -85 } };
-LAYOUTS mode_seps1[] = { { ANCHOR_CENTRE, -5 }, { ANCHOR_CENTRE, -15 } };
-
-LAYOUTS mode_btnEnhanced[]    = { { ANCHOR_CENTRE_MIN, -250 }, { ANCHOR_CENTRE, -120      } };
-LAYOUTS mode_lblEnhanced0[]   = { { ANCHOR_CENTRE_MIN,  -85 }, { ANCHOR_CENTRE, -120 - 12 } };
-LAYOUTS mode_lblEnhanced1[]   = { { ANCHOR_CENTRE_MIN,  -85 }, { ANCHOR_CENTRE, -120 + 12 } };
-LAYOUTS mode_btnClassicHax[]  = { { ANCHOR_CENTRE_MIN, -250 }, { ANCHOR_CENTRE,  -50      } };
-LAYOUTS mode_lblClassicHax0[] = { { ANCHOR_CENTRE_MIN,  -85 }, { ANCHOR_CENTRE,  -50 - 12 } };
-LAYOUTS mode_lblClassicHax1[] = { { ANCHOR_CENTRE_MIN,  -85 }, { ANCHOR_CENTRE,  -50 + 12 } };
-LAYOUTS mode_btnClassic[]     = { { ANCHOR_CENTRE_MIN, -250 }, { ANCHOR_CENTRE,   20      } };
-LAYOUTS mode_lblClassic0[]    = { { ANCHOR_CENTRE_MIN,  -85 }, { ANCHOR_CENTRE,   20 - 12 } };
-LAYOUTS mode_lblClassic1[]    = { { ANCHOR_CENTRE_MIN,  -85 }, { ANCHOR_CENTRE,   20 + 12 } };
-
-LAYOUTS mode_lblHelp[] = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE, 160 } };
-LAYOUTS mode_btnBack[] = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE, 170 } };
-
-
-CC_NOINLINE static void ChooseMode_Click(cc_bool classic, cc_bool classicHacks) {
-	Options_SetBool(OPT_CLASSIC_MODE, classic);
-	if (classic) Options_SetBool(OPT_CLASSIC_HACKS, classicHacks);
-
-	Options_SetBool(OPT_CUSTOM_BLOCKS,   !classic);
-	Options_SetBool(OPT_CPE,             !classic);
-	Options_SetBool(OPT_SERVER_TEXTURES, !classic);
-	Options_SetBool(OPT_CLASSIC_TABLIST, classic);
-	Options_SetBool(OPT_CLASSIC_OPTIONS, classic);
-
-	Options_SaveIfChanged();
-	Launcher_LoadTheme();
-	LBackend_UpdateLogoFont();
-	MainScreen_SetActive();
-}
-
-static void UseModeEnhanced(void* w)   { ChooseMode_Click(false, false); }
-static void UseModeClassicHax(void* w) { ChooseMode_Click(true,  true);  }
-static void UseModeClassic(void* w)    { ChooseMode_Click(true,  false); }
-
-static void ChooseModeScreen_Init(struct LScreen* s_) {
-	struct ChooseModeScreen* s = (struct ChooseModeScreen*)s_;
-	s->widgets     = chooseMode_widgets;
-	s->numWidgets  = Array_Elems(chooseMode_widgets);
-
-	LLine_Init(  &s->seps[0], 490, mode_seps0);
-	LLine_Init(  &s->seps[1], 490, mode_seps1);
-
-	LButton_Init(&s->btnEnhanced, 145, 35, "Enhanced",                        mode_btnEnhanced);
-	LLabel_Init( &s->lblEnhanced[0], "&eEnables custom blocks, changing env", mode_lblEnhanced0);
-	LLabel_Init( &s->lblEnhanced[1], "&esettings, longer messages, and more", mode_lblEnhanced1);
-
-	LButton_Init(&s->btnClassicHax, 145, 35, "Classic +hax",                     mode_btnClassicHax);
-	LLabel_Init( &s->lblClassicHax[0], "&eSame as Classic mode, except that",    mode_lblClassicHax0);
-	LLabel_Init( &s->lblClassicHax[1], "&ehacks (noclip/fly/speed) are enabled", mode_lblClassicHax1);
-
-	LButton_Init(&s->btnClassic, 145, 35, "Classic",                        mode_btnClassic);
-	LLabel_Init( &s->lblClassic[0], "&eOnly uses blocks and features from", mode_lblClassic0);
-	LLabel_Init( &s->lblClassic[1], "&ethe original minecraft classic",     mode_lblClassic1);
-
-	LLabel_Init( &s->lblHelp, "&eClick &fEnhanced &eif you're not sure which mode to choose.", mode_lblHelp);
-	LButton_Init(&s->btnBack, 80, 35, "Back",                                                  mode_btnBack);
-
-	s->btnEnhanced.OnClick   = UseModeEnhanced;
-	s->btnClassicHax.OnClick = UseModeClassicHax;
-	s->btnClassic.OnClick    = UseModeClassic;
-	s->btnBack.OnClick       = SwitchToSettings;
-}
-
-static void ChooseModeScreen_Show(struct LScreen* s_) {
-	struct ChooseModeScreen* s = (struct ChooseModeScreen*)s_;
-
-	s->widgets[11] = s->firstTime ?
-		(struct LWidget*)&ChooseModeScreen.lblHelp :
-		(struct LWidget*)&ChooseModeScreen.btnBack;
-}
-
-void ChooseModeScreen_SetActive(cc_bool firstTime) {
-	struct ChooseModeScreen* s = &ChooseModeScreen;
-	LScreen_Reset((struct LScreen*)s);
-	s->Init      = ChooseModeScreen_Init;
-	s->Show      = ChooseModeScreen_Show;
-	s->firstTime = firstTime;
-
-	s->title         = "Choose mode";
-	s->onEnterWidget = (struct LWidget*)&s->btnEnhanced;
-	Launcher_SetScreen((struct LScreen*)s);
-}
-
 
 /*########################################################################################################################*
 *---------------------------------------------------------ColoursScreen---------------------------------------------------*
@@ -261,7 +153,6 @@ static struct ColoursScreen {
 	struct LButton btnBack;
 	struct LLabel lblNames[5], lblRGB[3];
 	struct LInput iptColours[5 * 3];
-	struct LCheckbox cbClassic;
 	float colourAcc;
 } ColoursScreen;
 
@@ -275,7 +166,7 @@ static struct LWidget* colours_widgets[] = {
 	(struct LWidget*)&ColoursScreen.lblNames[2],    (struct LWidget*)&ColoursScreen.lblNames[3],
 	(struct LWidget*)&ColoursScreen.lblNames[4],
 	(struct LWidget*)&ColoursScreen.lblRGB[0],      (struct LWidget*)&ColoursScreen.lblRGB[1], (struct LWidget*)&ColoursScreen.lblRGB[2],
-	(struct LWidget*)&ColoursScreen.btnBack,        (struct LWidget*)&ColoursScreen.cbClassic
+	(struct LWidget*)&ColoursScreen.btnBack
 };
 
 #define IptColor_Layout(xx, yy) { { ANCHOR_CENTRE, xx }, { ANCHOR_CENTRE, yy } }
@@ -383,7 +274,6 @@ static void ColoursScreen_KeyDown(struct LScreen* s, int key, cc_bool was) {
 }
 
 static void ColoursScreen_ToggleBG(struct LCheckbox* w) {
-	Launcher_Theme.ClassicBackground = w->value;
 	Launcher_SaveTheme();
 	LBackend_ThemeChanged();
 }
@@ -411,8 +301,6 @@ static void ColoursScreen_Init(struct LScreen* s_) {
 	LLabel_Init( &s->lblRGB[2], "Blue",       clr_lblRGB2);
 	LButton_Init(&s->btnBack, 80, 35, "Back", clr_btnBack);
 
-	LCheckbox_Init(&s->cbClassic, "Classic style", clr_cbClassic);
-	s->cbClassic.ValueChanged = ColoursScreen_ToggleBG;
 	s->btnBack.OnClick = SwitchToThemes;
 }
 
@@ -420,7 +308,6 @@ static void ColoursScreen_Show(struct LScreen* s_) {
 	struct ColoursScreen* s = (struct ColoursScreen*)s_;
 	s->colourAcc = 0;
 
-	LCheckbox_Set(&s->cbClassic, Launcher_Theme.ClassicBackground);
 	ColoursScreen_UpdateAll(s);
 }
 
@@ -984,11 +871,7 @@ LAYOUTS cres_btnNo[]  = { { ANCHOR_CENTRE,  70 }, { ANCHOR_CENTRE, 45 } };
 static void CheckResourcesScreen_Yes(void*  w) { FetchResourcesScreen_SetActive(); }
 static void CheckResourcesScreen_Next(void* w) {
 	Http_ClearPending();
-	if (Options_LoadResult != ReturnCode_FileNotFound) {
-		MainScreen_SetActive();
-	} else {
-		ChooseModeScreen_SetActive(true);
-	}
+	MainScreen_SetActive();
 }
 
 static void CheckResourcesScreen_Init(struct LScreen* s_) {
@@ -1342,19 +1225,11 @@ static struct SettingsScreen {
 
 static struct LWidget* settings_widgets[] = {
 	(struct LWidget*)&SettingsScreen.sep,
-	(struct LWidget*)&SettingsScreen.btnMode,    (struct LWidget*)&SettingsScreen.lblMode,
 	(struct LWidget*)&SettingsScreen.btnColours, (struct LWidget*)&SettingsScreen.lblColours,
 	(struct LWidget*)&SettingsScreen.cbExtra,    (struct LWidget*)&SettingsScreen.cbEmpty,
 	(struct LWidget*)&SettingsScreen.btnBack,    (struct LWidget*)&SettingsScreen.cbScale
 };
-static struct LWidget* settings_classic[] = {
-	(struct LWidget*)&SettingsScreen.sep,
-	(struct LWidget*)&SettingsScreen.btnMode,    (struct LWidget*)&SettingsScreen.lblMode,
-	(struct LWidget*)&SettingsScreen.cbExtra,    (struct LWidget*)&SettingsScreen.cbEmpty,
-	(struct LWidget*)&SettingsScreen.btnBack,    (struct LWidget*)&SettingsScreen.cbScale
-};
 
-LAYOUTS set_btnMode[]    = { { ANCHOR_CENTRE,     -135 }, { ANCHOR_CENTRE,  -70 } };
 LAYOUTS set_lblMode[]    = { { ANCHOR_CENTRE_MIN,  -70 }, { ANCHOR_CENTRE,  -70 } };
 LAYOUTS set_btnColours[] = { { ANCHOR_CENTRE,     -135 }, { ANCHOR_CENTRE,  -20 } };
 LAYOUTS set_lblColours[] = { { ANCHOR_CENTRE_MIN,  -70 }, { ANCHOR_CENTRE,  -20 } };
@@ -1396,9 +1271,6 @@ static void SettingsScreen_Init(struct LScreen* s_) {
 	struct SettingsScreen* s = (struct SettingsScreen*)s_;
 	LLine_Init(  &s->sep, 380, set_sep);
 
-	LButton_Init(&s->btnMode, 110, 35, "Mode", set_btnMode);
-	LLabel_Init( &s->lblMode, "&eChange the enabled features", set_lblMode);
-
 	LButton_Init(&s->btnColours, 110, 35, "Theme", set_btnColours);
 	LLabel_Init( &s->lblColours, "&eChange how the launcher looks", set_lblColours);
 
@@ -1406,7 +1278,7 @@ static void SettingsScreen_Init(struct LScreen* s_) {
 	LCheckbox_Init(&s->cbExtra, "Force landscape", set_cbExtra);
 	s->cbExtra.ValueChanged = SettingsScreen_LockOrientation;
 #else
-	LCheckbox_Init(&s->cbExtra, "Close this after game starts", set_cbExtra);
+	LCheckbox_Init(&s->cbExtra, "Close launcher after game starts", set_cbExtra);
 	s->cbExtra.ValueChanged = SettingsScreen_AutoClose;
 #endif
 
@@ -1418,7 +1290,6 @@ static void SettingsScreen_Init(struct LScreen* s_) {
 	LCheckbox_Init(&s->cbScale, "Use display scaling", set_cbScale);
 	s->cbScale.ValueChanged = SettingsScreen_DPIScaling;
 
-	s->btnMode.OnClick    = SwitchToChooseMode;
 	s->btnColours.OnClick = SwitchToThemes;
 	s->btnBack.OnClick    = SwitchToMain;
 }
@@ -1426,13 +1297,8 @@ static void SettingsScreen_Init(struct LScreen* s_) {
 static void SettingsScreen_Show(struct LScreen* s_) {
 	struct SettingsScreen* s = (struct SettingsScreen*)s_;
 
-	if (Options_GetBool(OPT_CLASSIC_MODE, false)) {
-		s->widgets    = settings_classic;
-		s->numWidgets = Array_Elems(settings_classic);
-	} else {
-		s->widgets    = settings_widgets;
-		s->numWidgets = Array_Elems(settings_widgets);
-	}
+	s->widgets = settings_widgets;
+	s->numWidgets = Array_Elems(settings_widgets);
 
 #if defined CC_BUILD_MOBILE
 	LCheckbox_Set(&s->cbExtra, Options_GetBool(OPT_LANDSCAPE_MODE, false));
@@ -1470,10 +1336,9 @@ static struct LWidget* themes_widgets[] = {
 };
 
 LAYOUTS the_btnModern[]  = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE, -120 } };
-LAYOUTS the_btnClassic[] = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE,  -70 } };
-LAYOUTS the_btnNordic[]  = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE,  -20 } };
-LAYOUTS the_btnCustom[]  = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE,  120 } };
-LAYOUTS the_btnBack[]    = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE,  170 } };
+LAYOUTS the_btnNordic[]  = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE,  -70 } };
+LAYOUTS the_btnCustom[]  = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE,  -20 } };
+LAYOUTS the_btnBack[]    = { { ANCHOR_CENTRE, 0 }, { ANCHOR_CENTRE, 120 } };
 
 
 static void ThemesScreen_Set(const struct LauncherTheme* theme) {
@@ -1485,9 +1350,6 @@ static void ThemesScreen_Set(const struct LauncherTheme* theme) {
 static void ThemesScreen_Modern(void* w) {
 	ThemesScreen_Set(&Launcher_ModernTheme);
 }
-static void ThemesScreen_Classic(void* w) {
-	ThemesScreen_Set(&Launcher_ClassicTheme);
-}
 static void ThemesScreen_Nordic(void* w) {
 	ThemesScreen_Set(&Launcher_NordicTheme);
 }
@@ -1497,14 +1359,12 @@ static void ThemesScreen_Init(struct LScreen* s_) {
 	s->widgets    = themes_widgets;
 	s->numWidgets = Array_Elems(themes_widgets);
 
-	LButton_Init(&s->btnModern,  200, 35, "Modern",  the_btnModern);
-	LButton_Init(&s->btnClassic, 200, 35, "Classic", the_btnClassic);
+	LButton_Init(&s->btnModern, 200, 35, "Modern", the_btnModern);
 	LButton_Init(&s->btnNordic,  200, 35, "Nordic",  the_btnNordic);
 	LButton_Init(&s->btnCustom,  200, 35, "Custom",  the_btnCustom);
 	LButton_Init(&s->btnBack,     80, 35, "Back",    the_btnBack);
 
 	s->btnModern.OnClick  = ThemesScreen_Modern;
-	s->btnClassic.OnClick = ThemesScreen_Classic;
 	s->btnNordic.OnClick  = ThemesScreen_Nordic;
 	s->btnCustom.OnClick  = SwitchToColours;
 	s->btnBack.OnClick    = SwitchToSettings;

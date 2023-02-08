@@ -86,19 +86,16 @@ static void HUDScreen_UpdateLine1(struct HUDScreen* s) {
 	/* Don't remake texture when FPS isn't being shown */
 	if (!Gui.ShowFPS && s->line1.tex.ID) return;
 
-	if (Game_ClassicMode) {
-		String_Format1(&status, "%i chunk updates", &Game.ChunkUpdates);
-	} else {
-		if (Game.ChunkUpdates) {
-			String_Format1(&status, "%i chunks/s, ", &Game.ChunkUpdates);
-		}
-
-		indices = ICOUNT(Game_Vertices);
-		String_Format1(&status, "%i vertices", &indices);
-
-		ping = Ping_AveragePingMS();
-		if (ping) String_Format1(&status, ", ping %i ms", &ping);
+	if (Game.ChunkUpdates) {
+		String_Format1(&status, "%i chunks/s, ", &Game.ChunkUpdates);
 	}
+
+	indices = ICOUNT(Game_Vertices);
+	String_Format1(&status, "%i vertices", &indices);
+
+	ping = Ping_AveragePingMS();
+	if (ping) String_Format1(&status, ", ping %i ms", &ping);
+
 	TextWidget_Set(&s->line1, &status, &s->font);
 }
 
@@ -195,11 +192,7 @@ static void HUDScreen_ContextRecreated(void* screen) {
 	HUDScreen_Update(s, 1.0);
 	TextAtlas_Make(&s->posAtlas, &chars, &s->font, &prefix);
 
-	if (Game_ClassicMode) {
-		TextWidget_SetConst(line2, Game_Version.Name, &s->font);
-	} else {
-		HUDScreen_UpdateHackState(s);
-	}
+	HUDScreen_UpdateHackState(s);
 }
 
 static void HUDScreen_BuildMesh(void* screen) { }
@@ -222,15 +215,8 @@ static void HUDScreen_Layout(void* screen) {
 	s->posAtlas.tex.Y = posY;
 	Widget_SetLocation(line2, ANCHOR_MIN, ANCHOR_MIN, 2, 0);
 
-	if (Game_ClassicMode) {
-		/* Swap around so 0.30 version is at top */
-		line2->yOffset = line1->yOffset;
-		line1->yOffset = posY;
-		Widget_Layout(line1);
-	} else {
-		/* We can't use y in TextWidget_Make because that DPI scales it */
-		line2->yOffset = posY + s->posAtlas.tex.Height;
-	}
+	/* We can't use y in TextWidget_Make because that DPI scales it */
+	line2->yOffset = posY + s->posAtlas.tex.Height;
 
 	HUDScreen_LayoutHotbar();
 	Widget_Layout(line2);
@@ -297,13 +283,9 @@ static void HUDScreen_Render(void* screen, double delta) {
 	/* TODO: If Game_ShowFps is off and not classic mode, we should just return here */
 	if (Gui.ShowFPS) Elem_Render(&s->line1, delta);
 
-	if (Game_ClassicMode) {
-		Elem_Render(&s->line2, delta);
-	} else if (IsOnlyChatActive() && Gui.ShowFPS) {
-		if (HUDScreen_HasHacksChanged(s)) HUDScreen_UpdateHackState(s);
-		HUDScreen_DrawPosition(s);
-		Elem_Render(&s->line2, delta);
-	}
+	if (HUDScreen_HasHacksChanged(s)) HUDScreen_UpdateHackState(s);
+	HUDScreen_DrawPosition(s);
+	Elem_Render(&s->line2, delta);
 
 	if (!Gui_GetBlocksWorld()) Elem_Render(&s->hotbar, delta);
 }
@@ -339,7 +321,7 @@ typedef int (*TabListEntryCompare)(int x, int y);
 static struct TabListOverlay {
 	Screen_Body
 	int x, y, width, height;
-	cc_bool active, classic, staysOpen;
+	cc_bool active, staysOpen;
 	int namesCount, elementOffset;
 	struct TextWidget title;
 	struct FontDesc font;
@@ -353,14 +335,9 @@ static void TabListOverlay_DrawText(struct Texture* tex, struct TabListOverlay* 
 	cc_string tmp; char tmpBuffer[STRING_SIZE];
 	struct DrawTextArgs args;
 
-	if (Game_PureClassic) {
-		String_InitArray(tmp, tmpBuffer);
-		String_AppendColorless(&tmp, name);
-	} else {
-		tmp = *name;
-	}
+	tmp = *name;
 
-	DrawTextArgs_Make(&args, &tmp, &s->font, !s->classic);
+	DrawTextArgs_Make(&args, &tmp, &s->font, true);
 	Drawer2D_MakeTextTexture(tex, &args);
 }
 
@@ -397,7 +374,7 @@ static void TabListOverlay_SetColumnPos(struct TabListOverlay* s, int column, in
 
 		y += tex.Height + 1;
 		/* offset player names a bit, compared to group name */
-		if (!s->classic && s->ids[i] != GROUP_NAME_ID) {
+		if (s->ids[i] != GROUP_NAME_ID) {
 			tex.X += s->elementOffset;
 		}
 		s->textures[i] = tex;
@@ -551,12 +528,6 @@ static void TabListOverlay_QuickSort(int left, int right) {
 static void TabListOverlay_SortEntries(struct TabListOverlay* s) {
 	int i, id, count;
 	if (!s->namesCount) return;
-
-	if (s->classic) {
-		TabListOverlay_Instance.compare = TabListOverlay_PlayerCompare;
-		TabListOverlay_QuickSort(0, s->namesCount - 1);
-		return;
-	}
 
 	/* Sort the list by group */
 	/* Loop backwards, since DeleteAt() reduces NamesCount */
@@ -714,8 +685,7 @@ static void TabListOverlay_Free(void* screen) {
 static void TabListOverlay_Init(void* screen) {
 	struct TabListOverlay* s = (struct TabListOverlay*)screen;
 	s->active        = true;
-	s->classic       = Gui.ClassicTabList || !Server.SupportsExtPlayerList;
-	s->elementOffset = s->classic ? 0 : 10;
+	s->elementOffset = 10;
 	TextWidget_Init(&s->title);
 
 	Event_Register_(&TabListEvents.Added,   s, TabListOverlay_Add);
@@ -991,7 +961,7 @@ static void ChatScreen_DrawChat(struct ChatScreen* s, double delta) {
 	int i, logIdx;
 
 	ChatScreen_UpdateTexpackStatus(s);
-	if (!Game_PureClassic) { Elem_Render(&s->status, delta); }
+	Elem_Render(&s->status, delta);
 	Elem_Render(&s->bottomRight, delta);
 	Elem_Render(&s->clientStatus, delta);
 
@@ -1306,7 +1276,7 @@ static void ChatScreen_Init(void* screen) {
 	s->clientStatus.collapsible[0] = true;
 	s->clientStatus.collapsible[1] = true;
 
-	s->chat.underlineUrls = !Game_ClassicMode;
+	s->chat.underlineUrls = true;
 	s->chatIndex = Chat_Log.count - Gui.Chatlines;
 
 	Event_Register_(&ChatEvents.ChatReceived,   s, ChatScreen_ChatReceived);
@@ -1330,7 +1300,7 @@ static void ChatScreen_Render(void* screen, double delta) {
 	if (!TabListOverlay_Instance.active && !Gui_GetBlocksWorld()) {
 		ChatScreen_DrawCrosshairs();
 	}
-	if (s->grabsInput && !Gui.ClassicChat) {
+	if (s->grabsInput) {
 		ChatScreen_DrawChatBackground(s);
 	}
 
@@ -1405,12 +1375,10 @@ static struct InventoryScreen {
 static void InventoryScreen_GetTitleText(cc_string* desc, BlockID block) {
 	cc_string name;
 	int block_ = block;
-	if (Game_PureClassic) { String_AppendConst(desc, "Select block"); return; }
 	if (block == BLOCK_AIR) return;
 
 	name = Block_UNSAFE_GetName(block);
 	String_AppendString(desc, &name);
-	if (Game_ClassicMode) return;
 
 	String_Format1(desc, " (ID %i&f", &block_);
 	if (!Blocks.CanPlace[block])  { String_AppendConst(desc,  ", place &cNo&f"); }
@@ -1746,7 +1714,7 @@ CC_NOINLINE static void LoadingScreen_ShowCommon(const cc_string* title, const c
 	s->grabsInput  = true;
 	s->blocksWorld = true;
 	Gui_Add((struct Screen*)s, 
-		Game_ClassicMode ? GUI_PRIORITY_OLDLOADING : GUI_PRIORITY_LOADING);
+		GUI_PRIORITY_LOADING);
 }
 
 static const struct ScreenVTABLE LoadingScreen_VTABLE = {

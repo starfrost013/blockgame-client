@@ -96,8 +96,6 @@ void Model_Render(struct Model* model, struct Entity* e) {
 	struct Matrix m;
 	Vec3 pos = e->Position;
 	if (model->bobbing) pos.Y += e->Anim.BobbingModel;
-	/* Original classic offsets models slightly into ground */
-	if (Game_ClassicMode) pos.Y -= 1.5f / 16.0f;
 
 	Model_SetupState(model, e);
 	Gfx_SetVertexFormat(VERTEX_FORMAT_TEXTURED);
@@ -2263,7 +2261,7 @@ static void OnInit(void) {
 
 	RegisterDefaultModels();
 	OnContextRecreated(NULL);
-	Models.ClassicArms = Options_GetBool(OPT_CLASSIC_ARM_MODEL, Game_ClassicMode);
+	Models.ClassicArms = false; 
 
 	Event_Register_(&TextureEvents.FileChanged,  NULL, Models_TextureChanged);
 	Event_Register_(&GfxEvents.ContextLost,      NULL, OnContextLost);

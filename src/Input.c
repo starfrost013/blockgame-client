@@ -879,42 +879,6 @@ static cc_bool HandleBlockKey(int key) {
 	return true;
 }
 
-static cc_bool HandleNonClassicKey(int key) {
-	if (key == KeyBinds[KEYBIND_HIDE_GUI]) {
-		Game_HideGui = !Game_HideGui;
-	} else if (key == KeyBinds[KEYBIND_SMOOTH_CAMERA]) {
-		InputHandler_Toggle(key, &Camera.Smooth,
-			"  &eSmooth camera is &aenabled",
-			"  &eSmooth camera is &cdisabled");
-	} else if (key == KeyBinds[KEYBIND_AXIS_LINES]) {
-		InputHandler_Toggle(key, &AxisLinesRenderer_Enabled,
-			"  &eAxis lines (&4X&e, &2Y&e, &1Z&e) now show",
-			"  &eAxis lines no longer show");
-	} else if (key == KeyBinds[KEYBIND_AUTOROTATE]) {
-		InputHandler_Toggle(key, &AutoRotate_Enabled,
-			"  &eAuto rotate is &aenabled",
-			"  &eAuto rotate is &cdisabled");
-	} else if (key == KeyBinds[KEYBIND_THIRD_PERSON]) {
-		Camera_CycleActive();
-	} else if (key == KeyBinds[KEYBIND_DROP_BLOCK]) {
-		if (Inventory_CheckChangeSelected() && Inventory_SelectedBlock != BLOCK_AIR) {
-			/* Don't assign SelectedIndex directly, because we don't want held block
-			switching positions if they already have air in their inventory hotbar. */
-			Inventory_Set(Inventory.SelectedIndex, BLOCK_AIR);
-			Event_RaiseVoid(&UserEvents.HeldBlockChanged);
-		}
-	} else if (key == KeyBinds[KEYBIND_IDOVERLAY]) {
-		TexIdsOverlay_Show();
-	} else if (key == KeyBinds[KEYBIND_BREAK_LIQUIDS]) {
-		InputHandler_Toggle(key, &Game_BreakableLiquids,
-			"  &eBreakable liquids is &aenabled",
-			"  &eBreakable liquids is &cdisabled");
-	} else {
-		return false;
-	}
-	return true;
-}
-
 static cc_bool HandleCoreKey(int key) {
 	if (key == KeyBinds[KEYBIND_HIDE_FPS]) {
 		Gui.ShowFPS = !Gui.ShowFPS;
@@ -922,14 +886,46 @@ static cc_bool HandleCoreKey(int key) {
 		Game_ToggleFullscreen();
 	} else if (key == KeyBinds[KEYBIND_FOG]) {
 		Game_CycleViewDistance();
-	} else if (key == KEY_F5 && Game_ClassicMode) {
-		int weather = Env.Weather == WEATHER_SUNNY ? WEATHER_RAINY : WEATHER_SUNNY;
-		Env_SetWeather(weather);
-	} else {
-		if (Game_ClassicMode) return false;
-		return HandleNonClassicKey(key);
+	} else if (key == KeyBinds[KEYBIND_HIDE_GUI]) {
+		Game_HideGui = !Game_HideGui;
 	}
-	return true;
+	else if (key == KeyBinds[KEYBIND_SMOOTH_CAMERA]) {
+		InputHandler_Toggle(key, &Camera.Smooth,
+			"  &eSmooth camera is &aenabled",
+			"  &eSmooth camera is &cdisabled");
+	}
+	else if (key == KeyBinds[KEYBIND_AXIS_LINES]) {
+		InputHandler_Toggle(key, &AxisLinesRenderer_Enabled,
+			"  &eAxis lines (&4X&e, &2Y&e, &1Z&e) now show",
+			"  &eAxis lines no longer show");
+	}
+	else if (key == KeyBinds[KEYBIND_AUTOROTATE]) {
+		InputHandler_Toggle(key, &AutoRotate_Enabled,
+			"  &eAuto rotate is &aenabled",
+			"  &eAuto rotate is &cdisabled");
+	}
+	else if (key == KeyBinds[KEYBIND_THIRD_PERSON]) {
+		Camera_CycleActive();
+	}
+	else if (key == KeyBinds[KEYBIND_DROP_BLOCK]) {
+		if (Inventory_CheckChangeSelected() && Inventory_SelectedBlock != BLOCK_AIR) {
+			/* Don't assign SelectedIndex directly, because we don't want held block
+			switching positions if they already have air in their inventory hotbar. */
+			Inventory_Set(Inventory.SelectedIndex, BLOCK_AIR);
+			Event_RaiseVoid(&UserEvents.HeldBlockChanged);
+		}
+	}
+	else if (key == KeyBinds[KEYBIND_IDOVERLAY]) {
+		TexIdsOverlay_Show();
+	}
+	else if (key == KeyBinds[KEYBIND_BREAK_LIQUIDS]) {
+		InputHandler_Toggle(key, &Game_BreakableLiquids,
+			"  &eBreakable liquids is &aenabled",
+			"  &eBreakable liquids is &cdisabled");
+	}
+	else {
+		return false;
+	}
 }
 
 static void HandleHotkeyDown(int key) {

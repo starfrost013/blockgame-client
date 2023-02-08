@@ -634,9 +634,9 @@ static void Cw_Callback_1(struct NbtTag* tag) {
 		World.Volume = tag->dataSize;
 		World.Blocks = Cw_GetBlocks(tag);
 	}
-#ifdef EXTENDED_BLOCKS
+
 	if (IsTag(tag, "BlockArray2")) World_SetMapUpper(Cw_GetBlocks(tag));
-#endif
+
 }
 
 static void Cw_Callback_2(struct NbtTag* tag) {
@@ -720,7 +720,7 @@ static void Cw_Callback_4(struct NbtTag* tag) {
 		} 
 	}
 
-	if (IsTag(tag->parent, "BlockDefinitions") && Game_AllowCustomBlocks) {
+	if (IsTag(tag->parent, "BlockDefinitions")) {
 		static const cc_string blockStr = String_FromConst("Block");
 		if (!String_CaselessStarts(&tag->name, &blockStr)) return;	
 
@@ -755,7 +755,7 @@ static void Cw_Callback_5(struct NbtTag* tag) {
 		if (IsTag(tag, "B")) { cw_colB = NbtTag_U16(tag); return; }
 	}
 
-	if (IsTag(tag->parent->parent, "BlockDefinitions") && Game_AllowCustomBlocks) {
+	if (IsTag(tag->parent->parent, "BlockDefinitions")) {
 		if (IsTag(tag, "ID"))             { cw_curID = NbtTag_U8(tag);  return; }
 		if (IsTag(tag, "ID2"))            { cw_curID = NbtTag_U16(tag); return; }
 		if (IsTag(tag, "CollideType"))    { Blocks.Collide[id] = NbtTag_U8(tag); return; }
@@ -1466,7 +1466,6 @@ cc_result Cw_Save(struct Stream* stream) {
 	if ((res = Stream_Write(stream, buffer, (int)(cur - buffer)))) return res;
 	if ((res = Stream_Write(stream, World.Blocks, World.Volume)))  return res;
 
-#ifdef EXTENDED_BLOCKS
 	if (World.Blocks != World.Blocks2) {
 		cur = buffer;
 		cur = Nbt_WriteArray(cur, "BlockArray2", World.Volume);
@@ -1474,7 +1473,6 @@ cc_result Cw_Save(struct Stream* stream) {
 		if ((res = Stream_Write(stream, buffer, (int)(cur - buffer)))) return res;
 		if ((res = Stream_Write(stream, World.Blocks2, World.Volume))) return res;
 	}
-#endif
 
 	cur = buffer;
 	cur = Nbt_WriteDict(cur, "Metadata");

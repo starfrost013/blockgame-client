@@ -35,7 +35,6 @@ struct LScreen { LScreen_Layout };
 void LScreen_SelectWidget(struct LScreen* s, int idx, struct LWidget* w, cc_bool was);
 void LScreen_UnselectWidget(struct LScreen* s, int idx, struct LWidget* w);
 	
-void ChooseModeScreen_SetActive(cc_bool firstTime);
 void ColoursScreen_SetActive(void);
 void DirectConnectScreen_SetActive(void);
 void MFAScreen_SetActive(void);
