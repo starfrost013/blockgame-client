@@ -587,5 +587,8 @@
     <ClCompile Include="GameVersion.c">
       <Filter>Source Files\Game</Filter>
     </ClCompile>
+    <ClCompile Include="Graphics_GL1.c">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

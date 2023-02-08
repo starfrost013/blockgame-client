@@ -279,6 +279,7 @@
     <ClCompile Include="ExtMath.c" />
     <ClCompile Include="Formats.c" />
     <ClCompile Include="Game.c" />
+    <ClCompile Include="Graphics_GL1.c" />
     <ClCompile Include="Graphics_GL2.c" />
     <ClCompile Include="Gui.c" />
     <ClCompile Include="HeldBlockRenderer.c" />
